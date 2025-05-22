@@ -1,0 +1,11 @@
+type: workspace
+model: workspace
+id: wk_xaXUPwwVmi
+createdAt: 2025-05-22T15:23:54.820544
+updatedAt: 2025-05-22T15:23:58.941118
+name: IPA-Navigator
+description: ''
+encryptionKeyChallenge: eUE0azNuQwFYMCw3MypWsJjW3SjHVKDzdx032kOq1d1Jd6+xIccJrVJv7rUNGpEk0PdEIVUgNBDHmhY6Fz4l+PbfGWa61JThlvKuP3l5ep5IvweSw+UP8gVpF+uPXdSJpl0=
+settingValidateCertificates: true
+settingFollowRedirects: true
+settingRequestTimeout: 0

@@ -1,0 +1,18 @@
+type: http_request
+model: http_request
+id: rq_qMXEykAG7L
+createdAt: 2025-05-22T15:25:51.861630
+updatedAt: 2025-05-22T15:26:05.017783
+workspaceId: wk_xaXUPwwVmi
+folderId: null
+authentication: {}
+authenticationType: null
+body: {}
+bodyType: null
+description: ''
+headers: []
+method: GET
+name: Sample Test
+sortPriority: -1747927551859.0
+url: 0.0.0.0/
+urlParameters: []

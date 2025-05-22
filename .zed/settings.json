@@ -1,0 +1,43 @@
+{
+  "lsp": {
+    "deno": {
+      "settings": {
+        "deno": {
+          "enable": true
+        }
+      }
+    }
+  },
+  "languages": {
+    "TypeScript": {
+      "language_servers": [
+        "deno",
+        "!typescript-language-server",
+        "!vtsls",
+        "!eslint"
+      ],
+      "formatter": "language_server"
+    },
+    "TSX": {
+      "language_servers": [
+        "deno",
+        "!typescript-language-server",
+        "!vtsls",
+        "!eslint"
+      ],
+      "formatter": "language_server"
+    },
+    "Rust": {
+      "preferred_line_length": 80
+    }
+  },
+  "file_types": {
+    "Dockerfile": ["Dockerfile*[!dockerignore]"],
+    "Git Ignore": ["dockerignore"]
+  },
+  "hard_tabs": false,
+  "formatter": "auto",
+  "remove_trailing_whitespace_on_save": true,
+  "ensure_final_newline_on_save": true,
+  "file_scan_exclusions": ["**/node_modules", "**/.git", "**/.DS_Store"]
+}
