@@ -23,6 +23,7 @@ COPY --from=builder /app/target/release/src-server /usr/local/bin
 ENV HOST=0.0.0.0
 ENV PORT=3002
 ENV RUST_LOG=info
+ENV CONVEX_DEPLOYMENT_URL=https://tremendous-bear-886.convex.cloud
 EXPOSE 3002
 
 # Set the default command to run the application

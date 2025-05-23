@@ -7,9 +7,9 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - ENV DENO_DIR=/deno-dir/
-      - ENV DENO_ENV=production
-      - ENV DENO_INSTALL_ROOT=/usr/local
+      - DENO_DIR=/deno-dir/
+      - DENO_ENV=production
+      - DENO_INSTALL_ROOT=/usr/local
     volumes:
       - ./src-web:/app
       - /app/node_modules
@@ -26,6 +26,7 @@ services:
       - HOST=0.0.0.0
       - PORT=3002
       - RUST_LOG=debug
+      - CONVEX_DEPLOYMENT_URL=https://tremendous-bear-886.convex.cloud
     volumes:
       - ./src-server:/app
     restart: unless-stopped
