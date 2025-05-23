@@ -5,13 +5,15 @@ services:
       dockerfile: Dockerfile.dev
     container_name: ipa-web
     ports:
-      - "3001:3001"
-    restart: unless-stopped
+      - "5173:5173"
     environment:
       - ENV DENO_DIR=/deno-dir/
-      - ENV DENO_ENV=development
+      - ENV DENO_ENV=production
       - ENV DENO_INSTALL_ROOT=/usr/local
-      - ENV PATH=${DENO_INSTALL_ROOT}/bin:${PATH}
+    volumes:
+      - ./src-web:/app
+      - /app/node_modules
+    restart: unless-stopped
 
   server:
     build:
@@ -20,6 +22,10 @@ services:
     container_name: ipa-server
     ports:
       - "3002:3002"
-    restart: unless-stopped
     environment:
+      - HOST=0.0.0.0
+      - PORT=3002
       - RUST_LOG=debug
+    volumes:
+      - ./src-server:/app
+    restart: unless-stopped

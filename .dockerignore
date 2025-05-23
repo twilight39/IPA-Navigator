@@ -1,0 +1,41 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Build artifacts
+target/
+**/target/
+**/*.rs.bk
+*.pdb
+*.exe
+
+# Node modules
+node_modules/
+**/node_modules/
+**/package-lock.json
+
+
+# Docker files (avoid recursive copies)
+Dockerfile
+Dockerfile.dev
+docker-compose*.yml
+.dockerignore
+
+# Editor and IDE files
+.vscode/
+.idea/
+.zed/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Tests (for production builds)
+tests/
+test_data/
+**/tests/
+**/*_test.rs
