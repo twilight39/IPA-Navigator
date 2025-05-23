@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { SignOutButton, useAuth } from "@clerk/clerk-react";
+import { SignOutButton } from "@clerk/clerk-react";
+import { useConvexAuth } from "convex/react";
 
 export const Route = createFileRoute("/")({
   component: IndexComponent,
 });
 
 function IndexComponent() {
-  const { isSignedIn } = useAuth();
+  const { isAuthenticated } = useConvexAuth();
   return (
     <div className="navbar bg-base-100 shadow-sm">
       <div className="flex-1">
@@ -17,7 +18,7 @@ function IndexComponent() {
       <div className="flex-none">
         <ul className="menu menu-horizontal px-1 items-center">
           <li>
-            {isSignedIn
+            {isAuthenticated
               ? <SignOutButton>Sign Out</SignOutButton>
               : <Link to="/sign-in" className="btn-ghost">Sign In</Link>}
           </li>

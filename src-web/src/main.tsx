@@ -1,7 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { ClerkProvider } from "@clerk/clerk-react";
+import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
+import { ConvexReactClient } from "convex/react";
 
 import App from "./App.tsx";
 import { router } from "./router.tsx";
@@ -19,11 +21,15 @@ declare module "@tanstack/react-router" {
   }
 }
 
+const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
+
 // Create the root element
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-      <App />
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+        <App />
+      </ConvexProviderWithClerk>
     </ClerkProvider>
   </StrictMode>,
 );

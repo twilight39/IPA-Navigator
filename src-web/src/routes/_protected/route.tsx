@@ -1,7 +1,7 @@
 import { Outlet } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { Authenticated, Unauthenticated } from "convex/react";
 import { Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_protected")({
@@ -11,15 +11,15 @@ export const Route = createFileRoute("/_protected")({
 function ProtectedComponent() {
   return (
     <>
-      <SignedIn>
+      <Authenticated>
         <Outlet />
-      </SignedIn>
-      <SignedOut>
+      </Authenticated>
+      <Unauthenticated>
         <Navigate
           to="/sign-in"
           search={{ redirect: globalThis.location.pathname }}
         />
-      </SignedOut>
+      </Unauthenticated>
     </>
   );
 }
