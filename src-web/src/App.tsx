@@ -1,22 +1,10 @@
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  UserButton,
-} from "@clerk/clerk-react";
 import "./App.css";
+import { RouterProvider } from "@tanstack/react-router";
 
-function App() {
-  return (
-    <main>
-      <SignedOut>
-        <SignInButton />
-      </SignedOut>
-      <SignedIn>
-        <UserButton />
-      </SignedIn>
-    </main>
-  );
-}
+import { router } from "./router.tsx";
+
+const App = () => {
+  return <RouterProvider router={router} context={{}}></RouterProvider>;
+};
 
 export default App;
