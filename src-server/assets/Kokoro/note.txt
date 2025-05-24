@@ -1,0 +1,8 @@
+Kokoro 82M TTS Model (Quantized ONNX)
+Original source: https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX
+License: Apache License 2.0
+Copyright: [ONNX Community]
+
+This model is used unmodified from the original source.
+
+For full license terms, see the accompanying LICENSE-APACHE-2.0.txt file.
