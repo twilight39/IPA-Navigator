@@ -6,7 +6,7 @@ authors = ["Choo Kein Yie"]
 publish = false
 
 [workspace]
-members = ["ipa-navigator-axum", "ipa-navigator-convex"]
+members = ["ipa-navigator-axum", "ipa-navigator-convex", "ipa-navigator-kokoro"]
 
 [dependencies]
 axum = { workspace = true }

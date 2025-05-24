@@ -1,0 +1,17 @@
+[package]
+name = "ipa-navigator-kokoro"
+version = "0.1.0"
+edition = "2024"
+
+# Most of this crate is based on the Kokoros project:
+# https://github.com/lucasjinreal/Kokoros
+
+[dependencies]
+# ONNX Runtime for model inference
+ort = "1.16.3"
+
+# Text Processing
+espeak-rs = "0.1.9"   # Text to phonemes
+thiserror = "2.0.12"
+ndarray-npy = "0.9.1"
+ndarray = "0.16.1"
