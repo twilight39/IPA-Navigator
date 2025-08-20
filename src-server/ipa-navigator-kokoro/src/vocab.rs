@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 /// Mapping of characters to token IDs for text-to-speech (TTS) processing.
-static VOCABULARY: LazyLock<HashMap<char, usize>> = LazyLock::new(|| {
+pub static VOCABULARY: LazyLock<HashMap<char, usize>> = LazyLock::new(|| {
     // Character to Token ID mapping is based on:
     // https://github.com/lucasjinreal/Kokoros/blob/main/kokoros/src/tts/vocab.rs
     let pad = "$";
@@ -20,5 +20,5 @@ static VOCABULARY: LazyLock<HashMap<char, usize>> = LazyLock::new(|| {
 });
 
 /// Mapping of token IDs to characters for text-to-speech (TTS) processing.
-static REVERSE_VOCABULARY: LazyLock<HashMap<usize, char>> =
+pub static REVERSE_VOCABULARY: LazyLock<HashMap<usize, char>> =
     LazyLock::new(|| VOCABULARY.iter().map(|(&c, &idx)| (idx, c)).collect());

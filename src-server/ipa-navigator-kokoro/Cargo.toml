@@ -3,12 +3,12 @@ name = "ipa-navigator-kokoro"
 version = "0.1.0"
 edition = "2024"
 
-# Most of this crate is based on the Kokoros project:
+# Most of this crate references the Kokoros project:
 # https://github.com/lucasjinreal/Kokoros
 
 [dependencies]
 # ONNX Runtime for model inference
-ort = "1.16.3"
+ort = { version = "2.0.0-rc.10", features = ["coreml"] }
 
 # Text Processing
 espeak-rs = "0.1.9"   # Text to phonemes

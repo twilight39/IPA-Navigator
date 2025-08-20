@@ -1,4 +1,3 @@
-// error.rs
 use ort::OrtError;
 use thiserror::Error;
 
