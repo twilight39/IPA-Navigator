@@ -1,10 +1,8 @@
 use crate::error::TtsError;
 use crate::voices::VoiceType;
 use crate::{constants::ASSETS_PATH, voices::ALL_VOICES};
-use ndarray::{Array3, ArrayBase, IxDyn, OwnedRepr};
-use ndarray_npy::NpzReader;
+use ndarray::{ArrayBase, IxDyn, OwnedRepr};
 use ort::{
-    execution_providers::CoreMLExecutionProvider,
     session::{
         Session, SessionInputValue, SessionInputs, SessionOutputs, builder::GraphOptimizationLevel,
     },
@@ -594,6 +592,7 @@ mod tests {
 
     /// Utility function to inspect model metadata
     /// Keep this as a debugging tool
+    #[allow(dead_code)]
     fn inspect_model_metadata() -> Result<(), Box<dyn std::error::Error>> {
         use ort::session::builder::SessionBuilder;
         use std::path::PathBuf;
@@ -752,7 +751,7 @@ mod tests {
             ),
             (
                 VoiceType::BritishFemale(BritishFemaleVoice::Emma),
-                "en-gb",
+                "en",
                 "gb_phonemes",
             ),
         ];
