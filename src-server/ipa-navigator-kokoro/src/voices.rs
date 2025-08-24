@@ -1,29 +1,29 @@
 use crate::constants::ASSETS_PATH;
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::LazyLock};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-enum AmericanFemaleVoice {
+pub enum AmericanFemaleVoice {
     Bella,
     Nicole,
     Sky,
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-enum AmericanMaleVoice {
+pub enum AmericanMaleVoice {
     Fenrir,
-    Michale,
+    Michael,
     Puck,
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-enum BritishFemaleVoice {
+pub enum BritishFemaleVoice {
     Emma,
     Isabella,
     Lily,
 }
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-enum BritishMaleVoice {
+pub enum BritishMaleVoice {
     Fable,
     George,
     Lewis,
@@ -49,7 +49,7 @@ impl VoiceType {
             },
             VoiceType::AmericanMale(voice) => match voice {
                 AmericanMaleVoice::Fenrir => "am_fenrir.bin",
-                AmericanMaleVoice::Michale => "am_michale.bin",
+                AmericanMaleVoice::Michael => "am_michael.bin",
                 AmericanMaleVoice::Puck => "am_puck.bin",
             },
             VoiceType::BritishFemale(voice) => match voice {
@@ -79,6 +79,23 @@ impl VoiceType {
         PathBuf::from(voice_path)
     }
 }
+
+pub static ALL_VOICES: LazyLock<[VoiceType; 12]> = LazyLock::new(|| {
+    [
+        VoiceType::AmericanFemale(AmericanFemaleVoice::Bella),
+        VoiceType::AmericanFemale(AmericanFemaleVoice::Nicole),
+        VoiceType::AmericanFemale(AmericanFemaleVoice::Sky),
+        VoiceType::AmericanMale(AmericanMaleVoice::Fenrir),
+        VoiceType::AmericanMale(AmericanMaleVoice::Michael),
+        VoiceType::AmericanMale(AmericanMaleVoice::Puck),
+        VoiceType::BritishFemale(BritishFemaleVoice::Emma),
+        VoiceType::BritishFemale(BritishFemaleVoice::Isabella),
+        VoiceType::BritishFemale(BritishFemaleVoice::Lily),
+        VoiceType::BritishMale(BritishMaleVoice::Fable),
+        VoiceType::BritishMale(BritishMaleVoice::George),
+        VoiceType::BritishMale(BritishMaleVoice::Lewis),
+    ]
+});
 
 #[cfg(test)]
 mod tests {

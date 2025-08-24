@@ -1,16 +1,16 @@
 use crate::vocab::{REVERSE_VOCABULARY, VOCABULARY};
 
 /// Converts a string of phonemes into a vector of token IDs.
-pub fn tokenize(phonemes: &str) -> Vec<i32> {
+pub fn tokenize(phonemes: &str) -> Vec<i64> {
     phonemes
         .chars()
         .filter_map(|c| VOCABULARY.get(&c))
-        .map(|&id| id as i32)
-        .collect::<Vec<i32>>()
+        .map(|&id| id as i64)
+        .collect::<Vec<i64>>()
 }
 
 /// Converts a vector of token IDs back into a string of phonemes.
-pub fn tokens_to_phonemes(tokens: &[i32]) -> String {
+pub fn tokens_to_phonemes(tokens: &[i64]) -> String {
     tokens
         .iter()
         .filter_map(|&t| REVERSE_VOCABULARY.get(&(t as usize)))
@@ -58,7 +58,7 @@ mod test {
         assert_eq!(text, "$həlˈoʊ, wˈɜːld!$");
 
         // Test empty vector
-        let empty_tokens: Vec<i32> = vec![];
+        let empty_tokens: Vec<i64> = vec![];
         assert_eq!(tokens_to_phonemes(&empty_tokens), "");
     }
 }

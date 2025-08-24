@@ -1,4 +1,4 @@
-use ort::OrtError;
+use ort::Error;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -22,7 +22,7 @@ pub enum TtsError {
     IoError(#[from] std::io::Error),
 
     #[error("ONNX Runtime error: {0}")]
-    OrtError(#[from] OrtError),
+    OrtError(#[from] Error),
 
     #[error("Download error: {0}")]
     DownloadError(String),
