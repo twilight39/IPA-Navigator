@@ -40,3 +40,4 @@ Cargo.lock
 # Temporary files
 tmp/
 temp/
+src-server/assets/test_output

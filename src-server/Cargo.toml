@@ -2,5 +2,28 @@
 name = "src-server"
 version = "0.1.0"
 edition = "2024"
+authors = ["Choo Kein Yie"]
+publish = false
+
+[workspace]
+members = ["ipa-navigator-axum", "ipa-navigator-convex", "ipa-navigator-kokoro"]
 
 [dependencies]
+axum = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+ipa-navigator-axum = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
+
+
+[workspace.dependencies]
+axum = "0.8.4"
+serde = "1.0.219"
+serde_json = "1.0.140"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+tokio = { version = "1.45.0", features = ["full"] }
+ipa-navigator-axum = { path = "ipa-navigator-axum" }
+ipa-navigator-convex = { path = "ipa-navigator-convex" }

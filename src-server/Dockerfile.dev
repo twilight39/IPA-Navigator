@@ -1,0 +1,17 @@
+FROM rust:1
+
+WORKDIR /app
+
+# Install cargo-watch for hot reloading
+RUN cargo install cargo-watch
+COPY . .
+
+# Set environment variables
+ENV HOST=0.0.0.0
+ENV PORT=3002
+ENV RUST_LOG=debug
+
+# Expose the port
+EXPOSE 3002
+
+CMD ["cargo", "watch", "-x", "run"]

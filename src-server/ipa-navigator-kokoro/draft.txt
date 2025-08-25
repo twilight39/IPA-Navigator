@@ -1,0 +1,23 @@
+1. Get Kokoro ONNX model and voices
+    • I've put them in src-server/assets/kokoro
+3. Build an internal mapping between voice names and human-readable names used by the UI
+    • This will be a simple mapping, e.g. "en-US" -> "English (US)", "en-GB" -> "English (UK)", etc.
+4. Design a main KokoroTTS struct that initializes once at server startup and can be shared
+    • This struct will hold the ONNX model and the voices, and provide methods for text-to-speech conversion
+5. When API endpoint is called, process the text
+    i. Normalize text (e.g. remove punctuation, handle typos, remove special characters)
+        * Caching step maybe helpful here using hash of normalized text + model as key
+    ii. Convert text to phonemes using espeak-rs
+    iii. Map phonemes to token IDs using a predefined mapping
+    iv. Might need to split tokens into smaller chunks if it's too long for the model's context window?
+    v. Use the KokoroTTS struct to generate audio from the processed text
+    vi. Compress the audio to MP3 to reduce size
+        * Might be beneficial to stream audio back during generation to speed things up
+
+Notes:
+1. Auth Flow
+    • Setup a convex route to generate a token for the user to use this API
+        • The convex route would check auth, user api usage limits, etc.
+        • Then return a token that can be used to call the API
+        • This axum server can then check the convex database in realtime to verify the token
+        • If the token is valid, proceed with the request, then mutate the usage limits

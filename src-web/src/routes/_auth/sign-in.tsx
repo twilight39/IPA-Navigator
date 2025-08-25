@@ -4,6 +4,9 @@ import { useEffect } from "react";
 
 export const Route = createFileRoute("/_auth/sign-in")({
   component: SignInPage,
+  validateSearch: (search) => ({
+    redirect: search.redirect as string | undefined,
+  }),
 });
 
 function SignInPage() {

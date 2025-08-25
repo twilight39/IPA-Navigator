@@ -11,11 +11,10 @@ export const router = createRouter({
       <span className="loading loading-ring loading-xl"></span>
     </div>
   ),
-  defaultErrorComponent: ({ err }) => (
+  defaultErrorComponent: () => (
     <div className="flex items-center justify-center h-screen">
-      <ErrorComponent error={err} />
+      <ErrorComponent error="" />
     </div>
   ),
-  notFoundComponent: () => <div>404 Not Found</div>,
   context: {},
 });
