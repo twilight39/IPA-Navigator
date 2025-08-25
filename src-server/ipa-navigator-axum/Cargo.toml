@@ -13,6 +13,9 @@ tower-http = { version = "0.6.4", features = [
     "timeout",
 ] }
 
+# TTS
+ipa-navigator-kokoro = { path = "../ipa-navigator-kokoro" }
+
 # Async runtime
 tokio = { version = "1.45.0", features = ["full"] }
 

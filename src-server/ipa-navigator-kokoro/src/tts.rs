@@ -100,9 +100,11 @@ impl KokoroTTS {
             .lock()
             .map_err(|_| TtsError::InferenceError("Failed to acquire model lock".to_string()))?;
 
-        let voice_embedding = model.get_voice_embedding(voice_type.clone()).map_err(|e| {
-            TtsError::VoiceDataError(format!("Voice embedding not found for {:?}", voice_type))
-        })?;
+        let voice_embedding = model
+            .get_voice_embedding(voice_type.clone())
+            .map_err(|_e| {
+                TtsError::VoiceDataError(format!("Voice embedding not found for {:?}", voice_type))
+            })?;
 
         // Generate audio
         let audio_data = model.infer(tokens, voice_embedding, speed, None)?;
