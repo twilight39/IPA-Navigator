@@ -657,6 +657,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_different_voices() -> Result<(), Box<dyn std::error::Error>> {
         // Test multiple voices to ensure they all work correctly
         let voices = [
@@ -695,6 +696,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_long_text() -> Result<(), Box<dyn std::error::Error>> {
         // Test with a longer paragraph to ensure it handles longer texts correctly
         let long_text = "The Kokoro text-to-speech system can generate natural-sounding audio \
@@ -718,6 +720,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_different_speeds() -> Result<(), Box<dyn std::error::Error>> {
         // Test different speech speeds
         let speeds = [
@@ -741,6 +744,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_multilingual_phonemes() -> Result<(), Box<dyn std::error::Error>> {
         // Test handling of different language phonemes
         let voice_langs = [

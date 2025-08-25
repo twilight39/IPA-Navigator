@@ -69,7 +69,7 @@ impl VoiceType {
     pub fn language(&self) -> &'static str {
         match self {
             VoiceType::AmericanFemale(_) | VoiceType::AmericanMale(_) => "en-us",
-            VoiceType::BritishFemale(_) | VoiceType::BritishMale(_) => "en-gb",
+            VoiceType::BritishFemale(_) | VoiceType::BritishMale(_) => "en",
         }
     }
 

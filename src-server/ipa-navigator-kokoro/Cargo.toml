@@ -3,7 +3,7 @@ name = "ipa-navigator-kokoro"
 version = "0.1.0"
 edition = "2024"
 
-# Most of this crate references the Kokoros project:
+# Much of this crate references the Kokoros project:
 # https://github.com/lucasjinreal/Kokoros
 
 [dependencies]
@@ -11,10 +11,13 @@ edition = "2024"
 ort = { version = "2.0.0-rc.10", features = ["coreml"] }
 
 # Text Processing
-espeak-rs = "0.1.9"   # Text to phonemes
+espeak-rs = "0.1.9"       # Text to phonemes
 thiserror = "2.0.12"
 ndarray-npy = "0.9.1"
 ndarray = "0.16.1"
 tracing.workspace = true
 mp3lame-encoder = "0.2.1"
 hound = "3.5.1"
+lru = "0.16.0"
+regex = "1.11.2"
+lazy_static = "1.5.0"
