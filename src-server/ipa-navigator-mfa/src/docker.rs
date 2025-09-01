@@ -1,316 +1,189 @@
-//! Functions for interacting with Docker containers
+//! Functions for interacting with MFA Docker container
 
 use anyhow::{Context, Result};
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::LazyLock;
 
-/// Handles Docker container interactions
-pub struct DockerRunner {
-    /// The name of the Docker container to interact with
-    container_name: String,
+/// Path to the UK English MFA dictionary
+pub static UK_DICTIONARY_PATH: LazyLock<PathBuf> =
+    LazyLock::new(|| PathBuf::from("src-server/assets/MFA_Dictionaries/english_uk_mfa.dict"));
+
+/// Path to the US English MFA dictionary
+pub static US_DICTIONARY_PATH: LazyLock<PathBuf> =
+    LazyLock::new(|| PathBuf::from("src-server/assets/MFA_Dictionaries/english_us_mfa.dict"));
+
+/// Name of the MFA development container
+pub const MFA_CONTAINER_NAME: &str = "ipa-mfa-dev";
+
+/// Supported dialects for MFA pronunciation dictionaries
+#[derive(Debug, Clone, Copy)]
+pub enum MfaDialect {
+    /// American English (US)
+    AmericanEnglish,
+    /// British English (UK)
+    BritishEnglish,
 }
 
-impl DockerRunner {
-    /// Create a new Docker runner with the specified container name
-    pub fn new(container_name: impl Into<String>) -> Self {
-        Self {
-            container_name: container_name.into(),
+impl MfaDialect {
+    /// Get the MFA dictionary name for this dialect
+    pub fn dictionary_name(&self) -> &'static str {
+        match self {
+            MfaDialect::AmericanEnglish => "english_us_mfa",
+            MfaDialect::BritishEnglish => "english_uk_mfa",
         }
     }
 
-    /// Check if the container is running
-    pub fn is_running(&self) -> Result<bool> {
-        let output = Command::new("docker")
-            .args(["ps", "-q", "-f", &format!("name={}", self.container_name)])
-            .output()
-            .context("Failed to execute docker ps command")?;
+    /// Get the path to the dictionary file for this dialect
+    pub fn dictionary_path(&self) -> &'static PathBuf {
+        match self {
+            MfaDialect::AmericanEnglish => &US_DICTIONARY_PATH,
+            MfaDialect::BritishEnglish => &UK_DICTIONARY_PATH,
+        }
+    }
+}
 
-        Ok(!output.stdout.is_empty())
+/// Standard acoustic model to use for all alignments
+pub const DEFAULT_ACOUSTIC_MODEL: &str = "english_mfa";
+
+/// Run MFA align using Docker to process a spoken word
+///
+/// # Arguments
+/// * `job_dir` - Directory containing audio file and transcript
+/// * `dialect` - Dialect to use for pronunciation
+///
+/// # Returns
+/// Path to the generated TextGrid file
+pub fn run_mfa_align(job_dir: impl AsRef<Path>, dialect: MfaDialect) -> Result<PathBuf> {
+    let job_dir = job_dir.as_ref();
+
+    // Get the dictionary name for the selected dialect
+    let dictionary = dialect.dictionary_name();
+
+    // Prepare MFA command to run inside the container
+    // Convert the local path to the container path by replacing 'data' with '/data'
+    let job_dir_str = job_dir.to_string_lossy();
+    let container_job_path = if job_dir_str.starts_with("data/") {
+        format!("/{}", job_dir_str)
+    } else {
+        return Err(anyhow::anyhow!(
+            "Job directory must be within 'data/' directory: {}",
+            job_dir.display()
+        ));
+    };
+
+    // Prepare MFA command to run inside the container
+    // Mount the job directory as /data/job in the container
+    // Prepare MFA command to run inside the container
+    let mfa_cmd = format!(
+        "source /home/mfauser/miniconda3/etc/profile.d/conda.sh && \
+        conda activate aligner && \
+        mfa align {} {} {} {} --clean",
+        container_job_path, dictionary, DEFAULT_ACOUSTIC_MODEL, container_job_path
+    );
+
+    // Execute the command in the existing container
+    let output = Command::new("docker")
+        .args(["exec", MFA_CONTAINER_NAME, "bash", "-c", &mfa_cmd])
+        .output()
+        .context("Failed to execute Docker command")?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(anyhow::anyhow!("MFA align failed: {}", stderr));
     }
 
-    /// Run the MFA align command in the Docker container
-    pub fn run_mfa_align(
-        &self,
-        corpus_path: &str,
-        dict_path: &str,
-        acoustic_model: &str,
-        output_path: &str,
-    ) -> Result<()> {
-        println!(
-            "Running MFA align with:\nCorpus: {}\nDict: {}\nModel: {}\nOutput: {}",
-            corpus_path, dict_path, acoustic_model, output_path
-        );
-
-        // Create a command that sources conda and runs mfa in the right environment
-        let mfa_command = format!(
-            "source /home/mfauser/miniconda3/etc/profile.d/conda.sh && \
-                 conda activate aligner && \
-                 mfa align {} {} {} {}",
-            corpus_path, dict_path, acoustic_model, output_path
-        );
-
-        let status = Command::new("docker")
-            .args(["exec", &self.container_name, "bash", "-c", &mfa_command])
-            .status()
-            .context("Failed to execute mfa align command in Docker container")?;
-
-        if !status.success() {
-            return Err(anyhow::anyhow!(
-                "mfa align failed with exit code: {:?}",
-                status.code()
-            ));
+    // Find the TextGrid file in the output directory
+    let mut textgrid_path = None;
+    for entry in fs::read_dir(job_dir).context("Failed to read output directory")? {
+        let entry = entry.context("Failed to read directory entry")?;
+        let path = entry.path();
+        if path.extension().map_or(false, |ext| ext == "TextGrid") {
+            textgrid_path = Some(path);
+            break;
         }
-
-        Ok(())
     }
 
-    /// Execute a command in the Docker container
-    pub fn exec_command(&self, command: &str) -> Result<String> {
-        let output = Command::new("docker")
-            .args(["exec", &self.container_name, "bash", "-c", command])
-            .output()
-            .context("Failed to execute command in Docker container")?;
-
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(anyhow::anyhow!(
-                "Command failed with exit code {:?}: {}",
-                output.status.code(),
-                stderr
-            ));
-        }
-
-        Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+    match textgrid_path {
+        Some(path) => Ok(path),
+        None => Err(anyhow::anyhow!(
+            "Expected TextGrid file not found after MFA align in {}",
+            job_dir.display()
+        )),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
-    use std::io::Write;
-    use std::path::{Path, PathBuf};
-
-    // Helper function to copy a file
-    fn copy_file(from: impl AsRef<Path>, to: impl AsRef<Path>) -> Result<()> {
-        fs::copy(&from, &to).with_context(|| {
-            format!(
-                "Failed to copy from {:?} to {:?}",
-                from.as_ref(),
-                to.as_ref()
-            )
-        })?;
-        Ok(())
-    }
+    use std::path::PathBuf;
 
     #[test]
-    #[ignore = "Requires Docker container to be running"]
-    fn test_docker_runner_integration() -> Result<()> {
-        // Define paths for test files
-        let tests_dir = PathBuf::from("tests");
-        let data_dir = PathBuf::from("data");
-
-        // Create test input and output directories
-        let input_dir = data_dir.join("input").join("test_mfa");
-        let output_dir = data_dir.join("output").join("test_mfa");
-
-        // Create directories if they don't exist
-        fs::create_dir_all(&input_dir).context("Failed to create input directory")?;
-        fs::create_dir_all(&output_dir).context("Failed to create output directory")?;
-
-        println!(
-            "Created test directories: {:?}, {:?}",
-            input_dir, output_dir
-        );
-
-        // Verify the test audio file exists
-        let test_audio_file = tests_dir.join("input.wav");
-        if !test_audio_file.exists() {
-            return Err(anyhow::anyhow!(
-                "Test audio file not found at: {}",
-                test_audio_file.display()
-            ));
+    #[ignore]
+    fn test_run_mfa_align() {
+        if !docker_container_running() {
+            println!(
+                "Skipping test_run_mfa_align: Docker container '{}' is not running",
+                MFA_CONTAINER_NAME
+            );
+            return;
         }
 
-        // Create a transcript file for the test
-        let test_transcript_content = "This is a test sentence.";
-        let test_transcript_file = tests_dir.join("input.lab");
-        fs::write(&test_transcript_file, test_transcript_content)
-            .context("Failed to create test transcript file")?;
+        let job_dir = PathBuf::from("data/test_job");
+        fs::create_dir_all(&job_dir).expect("Failed to create job directory");
 
-        // Copy files to the data/input/test_mfa directory
-        let input_audio_file = input_dir.join("input.wav");
-        let input_transcript_file = input_dir.join("input.lab");
-
-        copy_file(&test_audio_file, &input_audio_file)?;
-        copy_file(&test_transcript_file, &input_transcript_file)?;
-
-        println!(
-            "Copied test files to input directory: {:?}, {:?}",
-            input_audio_file, input_transcript_file
-        );
-
-        // Create a log file for the test
-        let log_file = tests_dir.join("mfa_test.log");
-        let mut log = fs::File::create(&log_file).context("Failed to create log file")?;
-
-        writeln!(log, "MFA Docker Integration Test").context("Failed to write to log file")?;
-        writeln!(log, "========================").context("Failed to write to log file")?;
-        writeln!(
-            log,
-            "Test started at: {}",
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs()
-        )
-        .context("Failed to write to log file")?;
-
-        // Setup container name
-        let container_name = "ipa-mfa-dev";
-        let docker_runner = DockerRunner::new(container_name);
-
-        writeln!(log, "Using container: {}", container_name)
-            .context("Failed to write to log file")?;
-
-        // Check if Docker is available
-        let docker_version = Command::new("docker").arg("--version").output();
-        match docker_version {
-            Ok(output) => {
-                let version = String::from_utf8_lossy(&output.stdout);
-                writeln!(log, "Docker version: {}", version.trim())
-                    .context("Failed to write to log file")?;
-            }
-            Err(_) => {
-                writeln!(log, "Docker not available. Skipping test.")
-                    .context("Failed to write to log file")?;
-                return Ok(());
-            }
-        }
-
-        // Check if the container exists and is running
-        let is_running = docker_runner.is_running()?;
-        writeln!(log, "Container running: {}", is_running)
-            .context("Failed to write to log file")?;
-
-        if !is_running {
-            // Check if container exists but is not running
-            let exists = Command::new("docker")
-                .args(["ps", "-a", "-q", "-f", &format!("name={}", container_name)])
-                .output()
-                .map(|output| !output.stdout.is_empty())
-                .unwrap_or(false);
-
-            if exists {
-                writeln!(log, "Starting container...").context("Failed to write to log file")?;
-                let start_status = Command::new("docker")
-                    .args(["start", container_name])
-                    .status()
-                    .context("Failed to start container")?;
-
-                if !start_status.success() {
-                    writeln!(log, "Failed to start container. Skipping test.")
-                        .context("Failed to write to log file")?;
-                    return Ok(());
-                }
-
-                writeln!(log, "Container started successfully")
-                    .context("Failed to write to log file")?;
-            } else {
-                writeln!(log, "Container does not exist. Skipping test.")
-                    .context("Failed to write to log file")?;
-                return Ok(());
-            }
-        }
-
-        // Define the Docker container paths for MFA
-        let container_input_path = "/data/input/test_mfa";
-        let container_output_path = "/data/output/test_mfa";
-        let container_dict_path = "english_uk_mfa";
+        fs::copy(PathBuf::from("tests/input.wav"), job_dir.join("input.wav"))
+            .expect("Failed to copy input.wav");
+        fs::copy(PathBuf::from("tests/input.lab"), job_dir.join("input.lab"))
+            .expect("Failed to copy input.lab");
 
         // Run MFA align
-        writeln!(log, "Running MFA alignment with:").context("Failed to write to log file")?;
-        writeln!(log, "  Corpus: {}", container_input_path)
-            .context("Failed to write to log file")?;
-        writeln!(log, "  Dictionary: {}", container_dict_path)
-            .context("Failed to write to log file")?;
-        writeln!(log, "  Output: {}", container_output_path)
-            .context("Failed to write to log file")?;
+        let result = run_mfa_align("data/test_job", MfaDialect::BritishEnglish);
 
-        let result = docker_runner.run_mfa_align(
-            container_input_path,
-            container_dict_path,
-            "english_mfa",
-            container_output_path,
+        // Check if the alignment succeeded and produced a TextGrid file
+        assert!(result.is_ok(), "MFA alignment failed: {:?}", result.err());
+
+        let textgrid_path = result.unwrap();
+        assert!(
+            textgrid_path.exists(),
+            "TextGrid file not created at {:?}",
+            textgrid_path
         );
 
-        match &result {
-            Ok(_) => writeln!(log, "MFA alignment completed successfully")
-                .context("Failed to write to log file")?,
-            Err(e) => writeln!(log, "MFA alignment failed: {}", e)
-                .context("Failed to write to log file")?,
-        };
+        // Verify the content of the TextGrid file
+        let textgrid_content =
+            fs::read_to_string(&textgrid_path).expect("Failed to read TextGrid file");
+        assert!(
+            textgrid_content.contains("File type"),
+            "TextGrid file has invalid content"
+        );
 
-        // Check if output files were created
-        match docker_runner.exec_command(&format!("ls -la {}", container_output_path)) {
-            Ok(listing) => {
-                writeln!(log, "Output directory listing:")
-                    .context("Failed to write to log file")?;
-                writeln!(log, "{}", listing).context("Failed to write to log file")?;
-            }
-            Err(e) => writeln!(log, "Failed to list output directory: {}", e)
-                .context("Failed to write to log file")?,
-        };
+        // Copy the output TextGrid file back to the tests directory for reference
+        let output_filename = textgrid_path.file_name().unwrap();
+        let dest_path = PathBuf::from("tests").join(output_filename);
 
-        // Check for TextGrid file
-        let local_textgrid_files = match fs::read_dir(&output_dir) {
-            Ok(entries) => {
-                let textgrid_files: Vec<_> = entries
-                    .filter_map(|entry| {
-                        entry.ok().and_then(|e| {
-                            let path = e.path();
-                            if path.extension().map_or(false, |ext| ext == "TextGrid") {
-                                Some(path)
-                            } else {
-                                None
-                            }
-                        })
-                    })
-                    .collect();
+        fs::copy(&textgrid_path, &dest_path).expect("Failed to copy output TextGrid file");
+    }
 
-                writeln!(
-                    log,
-                    "Found {} TextGrid files locally:",
-                    textgrid_files.len()
-                )
-                .context("Failed to write to log file")?;
+    /// Helper function to check if the MFA Docker container is running
+    fn docker_container_running() -> bool {
+        let output = Command::new("docker")
+            .args([
+                "ps",
+                "--filter",
+                &format!("name={}", MFA_CONTAINER_NAME),
+                "--format",
+                "{{.Names}}",
+            ])
+            .output()
+            .expect("Failed to execute docker ps command");
 
-                for path in &textgrid_files {
-                    writeln!(log, "  {}", path.display()).context("Failed to write to log file")?;
-                }
+        if !output.status.success() {
+            return false;
+        }
 
-                textgrid_files
-            }
-            Err(e) => {
-                writeln!(log, "Failed to read output directory: {}", e)
-                    .context("Failed to write to log file")?;
-                Vec::new()
-            }
-        };
-
-        // Test completed
-        writeln!(
-            log,
-            "Test completed at: {}",
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs()
-        )
-        .context("Failed to write to log file")?;
-
-        println!("Test completed, log saved to: {}", log_file.display());
-        println!("Output files should be in: {}", output_dir.display());
-
-        Ok(())
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        !output_str.trim().is_empty()
     }
 }
