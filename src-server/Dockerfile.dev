@@ -2,6 +2,25 @@ FROM rust:1
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y \
+    espeak-ng \
+    espeak-ng-data \
+    libespeak-ng-dev \
+    build-essential \
+    llvm \
+    clang \
+    libclang-dev \
+    libclang1 \
+    cmake \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set LIBCLANG_PATH environment variable
+ENV LIBCLANG_PATH=/usr/lib/llvm-19/lib
+
+# Add rustfmt component
+RUN rustup component add rustfmt
+
 # Install cargo-watch for hot reloading
 RUN cargo install cargo-watch
 COPY . .
@@ -14,4 +33,5 @@ ENV RUST_LOG=debug
 # Expose the port
 EXPOSE 3002
 
-CMD ["cargo", "watch", "-x", "run"]
+# Exclude target/ and other directories to prevent unnecessary rebuilds
+CMD ["cargo", "watch", "--ignore", "target/", "--ignore", "*.wav", "-x", "run"]

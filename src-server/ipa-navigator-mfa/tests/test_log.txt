@@ -1,0 +1,2 @@
+Docker version: Docker version 28.3.3, build 980b856
+Container running: true

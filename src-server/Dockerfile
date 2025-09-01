@@ -7,6 +7,26 @@ COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
+# Install espeak-ng and development libraries needed for building
+RUN apt-get update && apt-get install -y \
+    espeak-ng \
+    espeak-ng-data \
+    libespeak-ng-dev \
+    build-essential \
+    llvm \
+    clang \
+    libclang-dev \
+    libclang1 \
+    cmake \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set LIBCLANG_PATH environment variable
+ENV LIBCLANG_PATH=/usr/lib/llvm-19/lib/
+
+# Add rustfmt component
+RUN rustup component add rustfmt
+
 COPY --from=planner /app/recipe.json recipe.json
 # Build dependencies - this is the caching Docker layer!
 RUN cargo chef cook --release --recipe-path recipe.json
@@ -16,6 +36,12 @@ RUN cargo build --release --bin src-server
 
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
+
+# Install espeak-ng runtime dependencies
+RUN apt-get update && apt-get install -y \
+    espeak-ng \
+    espeak-ng-data \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/src-server /usr/local/bin
 

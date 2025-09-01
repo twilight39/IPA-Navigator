@@ -1,0 +1,60 @@
+# Use AMD64 Debian as base image
+FROM --platform=linux/amd64 debian:bullseye-slim
+
+# Install necessary dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    bzip2 \
+    ca-certificates \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create mfa user and directories
+RUN useradd -ms /bin/bash mfauser
+RUN mkdir -p /data /mfa
+
+# Set ownership first
+RUN chown -R mfauser:mfauser /home/mfauser /data /mfa
+
+# Switch to mfa user for Miniconda installation
+USER mfauser
+WORKDIR /home/mfauser
+
+# Install Miniconda for AMD64
+RUN mkdir -p ~/miniconda3 && \
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh && \
+    bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3 && \
+    rm ~/miniconda3/miniconda.sh
+
+# Initialize conda for bash shell
+RUN echo '. ~/miniconda3/etc/profile.d/conda.sh' >> ~/.bashrc && \
+    echo 'conda activate base' >> ~/.bashrc
+
+# Add miniconda to PATH
+ENV PATH="/home/mfauser/miniconda3/bin:${PATH}"
+
+# Create and activate the aligner environment using a shell script with source
+RUN /bin/bash -c "source ~/miniconda3/etc/profile.d/conda.sh && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+    conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
+    conda init --all"
+
+RUN /bin/bash -c "conda config --add channels conda-forge && conda create -n aligner montreal-forced-aligner"
+
+# Create startup script that activates conda environment
+RUN echo '#!/bin/bash' > /home/mfauser/startup.sh && \
+    echo '. ~/miniconda3/etc/profile.d/conda.sh' >> /home/mfauser/startup.sh && \
+    echo 'conda activate aligner' >> /home/mfauser/startup.sh && \
+    echo 'tail -f /dev/null' >> /home/mfauser/startup.sh && \
+    chmod +x /home/mfauser/startup.sh
+
+# Pre-install dictionaries and models
+RUN /bin/bash -c "source ~/miniconda3/etc/profile.d/conda.sh && \
+    conda activate aligner && \
+    mfa model download acoustic english_mfa && \
+    mfa model download dictionary english_us_mfa && \
+    mfa model download dictionary english_uk_mfa"
+
+
+# Set entrypoint to run the startup script
+ENTRYPOINT ["/home/mfauser/startup.sh"]
