@@ -16,6 +16,9 @@ tower-http = { version = "0.6.4", features = [
 # TTS
 ipa-navigator-kokoro = { path = "../ipa-navigator-kokoro" }
 
+# MFA
+ipa-navigator-mfa = { path = "../ipa-navigator-mfa" }
+
 # Async runtime
 tokio = { version = "1.45.0", features = ["full"] }
 
@@ -27,3 +30,4 @@ serde_json = "1.0.140"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 thiserror = "2.0.12"
+base64 = "0.22.1"
