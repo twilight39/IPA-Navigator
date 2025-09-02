@@ -30,3 +30,19 @@ services:
     volumes:
       - ./src-server:/app
     restart: unless-stopped
+
+  mfa:
+    platform: linux/amd64
+    build:
+      context: ./src-server/ipa-navigator-mfa
+      dockerfile: Dockerfile
+    container_name: ipa-mfa
+    ports:
+      - "4000:4000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=4000
+      - RUST_LOG=debug
+    volumes:
+      - ./src-server/ipa-navigator-mfa/data:/data
+    restart: unless-stopped

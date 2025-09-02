@@ -2,7 +2,7 @@ type: http_request
 model: http_request
 id: rq_vuFBvbW3eF
 createdAt: 2025-08-25T07:43:15.103573
-updatedAt: 2025-08-25T09:19:32.012311
+updatedAt: 2025-09-02T00:16:46.373370
 workspaceId: wk_xaXUPwwVmi
 folderId: null
 authentication: {}
@@ -10,7 +10,7 @@ authenticationType: null
 body:
   text: |2-
      {
-       "text": "Flower, oh flower... Great blossom who protects me...",
+       "text": "This is a test sentence.",
        "voice": "american_female_bella",
        "speed": 1
      }
@@ -30,19 +30,7 @@ name: TTS
 sortPriority: -1747927551859.0
 url: 0.0.0.0:3002/api/tts
 urlParameters:
-- enabled: false
-  name: text
-  value: ''
-  id: 2uCwSf3uxm
-- enabled: false
-  name: voice
-  value: american_female_bella
-  id: cJA55ah8Df
-- enabled: false
-  name: speed
-  value: '1'
-  id: 5X5pY5459m
 - enabled: true
   name: ''
   value: ''
-  id: dgedrN9ti6
+  id: Rxjc6D4NXw

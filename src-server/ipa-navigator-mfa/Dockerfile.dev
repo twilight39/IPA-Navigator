@@ -1,18 +1,8 @@
-FROM --platform=amd64 rust:1
+# Use AMD64 Debian as base image
+FROM --platform=linux/amd64 debian:bullseye-slim
 
-WORKDIR /app
-
+# Install necessary dependencies
 RUN apt-get update && apt-get install -y \
-    espeak-ng \
-    espeak-ng-data \
-    libespeak-ng-dev \
-    build-essential \
-    llvm \
-    clang \
-    libclang-dev \
-    libclang1 \
-    cmake \
-    pkg-config \
     wget \
     bzip2 \
     ca-certificates \
@@ -51,6 +41,13 @@ RUN /bin/bash -c "source ~/miniconda3/etc/profile.d/conda.sh && \
 
 RUN /bin/bash -c "conda config --add channels conda-forge && conda create -n aligner montreal-forced-aligner"
 
+# Create startup script that activates conda environment
+RUN echo '#!/bin/bash' > /home/mfauser/startup.sh && \
+    echo '. ~/miniconda3/etc/profile.d/conda.sh' >> /home/mfauser/startup.sh && \
+    echo 'conda activate aligner' >> /home/mfauser/startup.sh && \
+    echo 'tail -f /dev/null' >> /home/mfauser/startup.sh && \
+    chmod +x /home/mfauser/startup.sh
+
 # Pre-install dictionaries and models
 RUN /bin/bash -c "source ~/miniconda3/etc/profile.d/conda.sh && \
     conda activate aligner && \
@@ -58,27 +55,6 @@ RUN /bin/bash -c "source ~/miniconda3/etc/profile.d/conda.sh && \
     mfa model download dictionary english_us_mfa && \
     mfa model download dictionary english_uk_mfa"
 
-# Switch back to root for Rust dependencies
-USER root
-WORKDIR /usr/src/app
 
-# Set LIBCLANG_PATH environment variable
-ENV LIBCLANG_PATH=/usr/lib/llvm-19/lib
-
-# Add rustfmt component
-RUN rustup component add rustfmt
-
-# Install cargo-watch for hot reloading
-RUN cargo install cargo-watch
-COPY . .
-
-# Set environment variables
-ENV HOST=0.0.0.0
-ENV PORT=3002
-ENV RUST_LOG=debug
-
-# Expose the port
-EXPOSE 3002
-
-# Exclude target/ and other directories to prevent unnecessary rebuilds
-CMD ["cargo", "watch", "--ignore", "target/", "--ignore", "*.wav", "-x", "run"]
+# Set entrypoint to run the startup script
+ENTRYPOINT ["/home/mfauser/startup.sh"]

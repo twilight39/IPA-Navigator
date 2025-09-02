@@ -5,7 +5,7 @@ use tower_http::{
     compression::CompressionLayer, cors::CorsLayer, timeout::TimeoutLayer, trace::TraceLayer,
 };
 
-use crate::handlers::{health, tts};
+use crate::handlers::{health, mfa, tts};
 
 /// Creates the router for the application.
 pub fn create_router() -> Router {
@@ -17,6 +17,7 @@ pub fn create_router() -> Router {
     Router::new()
         .route("/health", get(health::health_check))
         .route("/api/tts", post(tts::synthesize_speech))
+        .route("/api/pronunciation", post(mfa::assess))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(CompressionLayer::new())

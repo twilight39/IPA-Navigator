@@ -6,7 +6,7 @@ authors = ["Choo Kein Yie"]
 publish = false
 
 [workspace]
-members = ["ipa-navigator-axum", "ipa-navigator-convex", "ipa-navigator-kokoro"]
+members = ["ipa-navigator-axum", "ipa-navigator-convex", "ipa-navigator-kokoro", "ipa-navigator-mfa"]
 
 [dependencies]
 axum = { workspace = true }
@@ -26,4 +26,3 @@ tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
 tokio = { version = "1.45.0", features = ["full"] }
 ipa-navigator-axum = { path = "ipa-navigator-axum" }
-ipa-navigator-convex = { path = "ipa-navigator-convex" }
