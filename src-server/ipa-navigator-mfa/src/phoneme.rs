@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 /// Phonetic features of a phoneme
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct PhonemeFeatures {
     // Manner of articulation
     is_plosive: bool,
@@ -40,6 +40,11 @@ pub struct PhonemeFeatures {
 
 /// Calculate similarity between two phonemes based on their features
 pub fn calculate_feature_similarity(a: &PhonemeFeatures, b: &PhonemeFeatures) -> f64 {
+    // Check if features are completely identical
+    if a == b {
+        return 1.0; // Perfect match
+    }
+
     // If one is a vowel and the other is a consonant, they're quite different
     if a.is_vowel != b.is_vowel {
         return 0.1; // Minimal similarity
@@ -672,128 +677,182 @@ pub static IPA_PHONEME_FEATURES: LazyLock<HashMap<String, PhonemeFeatures>> = La
     features
 });
 
-/// Mapping from ARPAbet phonemes to IPA phonemes
-pub static ARPA_TO_IPA: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
-    let mut map = HashMap::new();
-    // Vowels
-    map.insert("AA", "ɑ");
-    map.insert("AE", "æ");
-    map.insert("AH", "ʌ");
-    map.insert("AO", "ɔ");
-    map.insert("AW", "aʊ");
-    map.insert("AY", "aɪ");
-    map.insert("EH", "ɛ");
-    map.insert("ER", "ɝ");
-    map.insert("EY", "eɪ");
-    map.insert("IH", "ɪ");
-    map.insert("IY", "i");
-    map.insert("OW", "oʊ");
-    map.insert("OY", "ɔɪ");
-    map.insert("UH", "ʊ");
-    map.insert("UW", "u");
-    // Consonants
-    map.insert("B", "b");
-    map.insert("CH", "tʃ");
-    map.insert("D", "d");
-    map.insert("DH", "ð");
-    map.insert("F", "f");
-    map.insert("G", "ɡ");
-    map.insert("HH", "h");
-    map.insert("JH", "dʒ");
-    map.insert("K", "k");
-    map.insert("L", "l");
-    map.insert("M", "m");
-    map.insert("N", "n");
-    map.insert("NG", "ŋ");
-    map.insert("P", "p");
-    map.insert("R", "ɹ");
-    map.insert("S", "s");
-    map.insert("SH", "ʃ");
-    map.insert("T", "t");
-    map.insert("TH", "θ");
-    map.insert("V", "v");
-    map.insert("W", "w");
-    map.insert("Y", "j");
-    map.insert("Z", "z");
-    map.insert("ZH", "ʒ");
-    map
-});
-
-/// Mapping from IPA phonemes to ARPAbet phonemes
-pub static IPA_TO_ARPA: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
-    let mut map = HashMap::new();
-    for (arpa, ipa) in ARPA_TO_IPA.iter() {
-        map.insert(*ipa, *arpa);
-    }
-    map
-});
-
-/// Convert ARPAbet phoneme to IPA
-pub fn arpa_to_ipa(arpa: &str) -> Option<&'static str> {
-    // Handle stress markers and other decorations
-    let base_phoneme = arpa.trim_end_matches(|c: char| c.is_numeric() || c == '_');
-    ARPA_TO_IPA.get(base_phoneme).copied()
-}
-
-/// Convert IPA phoneme to ARPAbet
-pub fn ipa_to_arpa(ipa: &str) -> Option<&'static str> {
-    IPA_TO_ARPA.get(ipa).copied()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_arpa_to_ipa_conversion() {
-        assert_eq!(arpa_to_ipa("AA"), Some("ɑ"));
-        assert_eq!(arpa_to_ipa("AE"), Some("æ"));
-        assert_eq!(arpa_to_ipa("IY"), Some("i"));
-        assert_eq!(arpa_to_ipa("ZH"), Some("ʒ"));
+    fn test_phoneme_features_default() {
+        let features = PhonemeFeatures::default();
+
+        // Default should have all fields set to false
+        assert!(!features.is_plosive);
+        assert!(!features.is_fricative);
+        assert!(!features.is_affricate);
+        assert!(!features.is_nasal);
+        assert!(!features.is_approximant);
+        assert!(!features.is_lateral);
+
+        assert!(!features.is_bilabial);
+        assert!(!features.is_labiodental);
+        assert!(!features.is_dental);
+        assert!(!features.is_alveolar);
+        assert!(!features.is_postalveolar);
+        assert!(!features.is_palatal);
+        assert!(!features.is_velar);
+        assert!(!features.is_glottal);
+
+        assert!(!features.is_vowel);
+        assert!(!features.is_front);
+        assert!(!features.is_central);
+        assert!(!features.is_back);
+        assert!(!features.is_close);
+        assert!(!features.is_mid);
+        assert!(!features.is_open);
+        assert!(!features.is_rounded);
+
+        assert!(!features.is_voiced);
     }
 
     #[test]
-    fn test_arpa_to_ipa_with_stress_markers() {
-        assert_eq!(arpa_to_ipa("AA1"), Some("ɑ"));
-        assert_eq!(arpa_to_ipa("AE2"), Some("æ"));
-        assert_eq!(arpa_to_ipa("IY0"), Some("i"));
+    fn test_calculate_feature_similarity() {
+        // Test identical features
+        let features_a = PhonemeFeatures {
+            is_plosive: true,
+            is_voiced: true,
+            is_bilabial: true,
+            ..PhonemeFeatures::default()
+        };
+
+        // Same features should have perfect similarity
+        assert_eq!(
+            calculate_feature_similarity(&features_a, &features_a),
+            1.0,
+            "Identical features should have similarity of 1.0"
+        );
+
+        // Test similar features with one difference
+        let features_b = PhonemeFeatures {
+            is_plosive: true,
+            is_voiced: false, // Only difference
+            is_bilabial: true,
+            ..PhonemeFeatures::default()
+        };
+
+        let similarity_with_one_diff = calculate_feature_similarity(&features_a, &features_b);
+        assert!(
+            similarity_with_one_diff < 1.0 && similarity_with_one_diff > 0.5,
+            "Similar features should have high but not perfect similarity: {}",
+            similarity_with_one_diff
+        );
+
+        // Test very different features
+        let features_c = PhonemeFeatures {
+            is_vowel: true,
+            is_open: true,
+            is_back: true,
+            ..PhonemeFeatures::default()
+        };
+
+        let similarity_different = calculate_feature_similarity(&features_a, &features_c);
+        assert!(
+            similarity_different < 0.5,
+            "Different feature types should have low similarity: {}",
+            similarity_different
+        );
     }
 
     #[test]
-    fn test_arpa_to_ipa_unknown_phoneme() {
-        assert_eq!(arpa_to_ipa("XYZ"), None);
-        assert_eq!(arpa_to_ipa(""), None);
-    }
+    fn test_ipa_phoneme_features_map() {
+        // Test that common phonemes have entries in the map
+        let common_phonemes = ["p", "b", "t", "d", "k", "g", "a", "i", "u", "s", "z"];
 
-    #[test]
-    fn test_ipa_to_arpa_conversion() {
-        assert_eq!(ipa_to_arpa("ɑ"), Some("AA"));
-        assert_eq!(ipa_to_arpa("æ"), Some("AE"));
-        assert_eq!(ipa_to_arpa("i"), Some("IY"));
-        assert_eq!(ipa_to_arpa("ʒ"), Some("ZH"));
-    }
-
-    #[test]
-    fn test_ipa_to_arpa_unknown_phoneme() {
-        assert_eq!(ipa_to_arpa("q"), None); // Not in our mapping
-        assert_eq!(ipa_to_arpa(""), None);
-    }
-
-    #[test]
-    fn test_bidirectional_conversion() {
-        // Test round-trip conversions
-        for (arpa, _) in ARPA_TO_IPA.iter() {
-            let ipa = arpa_to_ipa(arpa);
-            assert!(ipa.is_some(), "Failed to convert ARPA {arpa} to IPA");
-
-            let arpa_back = ipa_to_arpa(ipa.unwrap());
-            assert_eq!(
-                arpa_back,
-                Some(*arpa),
-                "Failed round-trip conversion: {arpa} -> {} -> {:?}",
-                ipa.unwrap(),
-                arpa_back
+        for phoneme in common_phonemes {
+            assert!(
+                IPA_PHONEME_FEATURES.contains_key(phoneme),
+                "Map should contain common phoneme '{}'",
+                phoneme
             );
         }
+
+        // Test some specific feature values
+
+        // 'p' should be a voiceless bilabial plosive
+        let p_features = IPA_PHONEME_FEATURES.get("p").unwrap();
+        assert!(p_features.is_plosive);
+        assert!(p_features.is_bilabial);
+        assert!(!p_features.is_voiced);
+
+        // 'a' should be an open vowel
+        let a_features = IPA_PHONEME_FEATURES.get("a").unwrap();
+        assert!(a_features.is_vowel);
+        assert!(a_features.is_open);
+        assert!(!a_features.is_plosive);
+    }
+
+    #[test]
+    fn test_calculate_feature_similarity_identical() {
+        // Test with identical features
+        let features_a = PhonemeFeatures {
+            is_plosive: true,
+            is_voiced: true,
+            is_bilabial: true,
+            ..PhonemeFeatures::default()
+        };
+
+        let similarity = calculate_feature_similarity(&features_a, &features_a);
+        assert_eq!(
+            similarity, 1.0,
+            "Identical features should have similarity of 1.0"
+        );
+    }
+
+    #[test]
+    fn test_calculate_feature_similarity_similar() {
+        // Test with similar features (one difference)
+        let features_a = PhonemeFeatures {
+            is_plosive: true,
+            is_voiced: true,
+            is_bilabial: true,
+            ..PhonemeFeatures::default()
+        };
+
+        let features_b = PhonemeFeatures {
+            is_plosive: true,
+            is_voiced: false, // Only difference
+            is_bilabial: true,
+            ..PhonemeFeatures::default()
+        };
+
+        let similarity = calculate_feature_similarity(&features_a, &features_b);
+        assert!(
+            similarity < 1.0 && similarity > 0.5,
+            "Similar features should have high but not perfect similarity: {}",
+            similarity
+        );
+    }
+
+    #[test]
+    fn test_calculate_feature_similarity_different() {
+        // Test with very different features
+        let consonant_features = PhonemeFeatures {
+            is_plosive: true,
+            is_bilabial: true,
+            ..PhonemeFeatures::default()
+        };
+
+        let vowel_features = PhonemeFeatures {
+            is_vowel: true,
+            is_open: true,
+            is_back: true,
+            ..PhonemeFeatures::default()
+        };
+
+        let similarity = calculate_feature_similarity(&consonant_features, &vowel_features);
+        assert!(
+            similarity < 0.5,
+            "Different feature types should have low similarity: {}",
+            similarity
+        );
     }
 }

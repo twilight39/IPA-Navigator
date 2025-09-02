@@ -4,13 +4,11 @@ use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::docker::MfaDialect;
 use crate::mfa_parser::{MfaSegment, parse_textgrid};
-use crate::phoneme::{
-    IPA_PHONEME_FEATURES, PhonemeFeatures, arpa_to_ipa, calculate_feature_similarity,
-};
+use crate::phoneme::{IPA_PHONEME_FEATURES, PhonemeFeatures, calculate_feature_similarity};
 
 /// Dictionary entry mapping a word to its phonemes
 #[derive(Debug, Clone)]
@@ -24,7 +22,6 @@ pub struct DictionaryEntry {
 pub struct PhonemeAccuracy {
     pub expected: String,
     pub actual: String,
-    pub actual_arpa: String,
     pub score: f64,
     pub start_time: f64,
     pub end_time: f64,
@@ -79,10 +76,7 @@ pub fn score_phoneme_accuracy(
     for i in 0..min_len {
         let expected_ipa = &expected_phonemes[i];
         let actual_segment = actual_phonemes[i];
-        let actual_arpa = actual_segment.label.clone();
-
-        // Convert ARPAbet to IPA for the actual phoneme
-        let actual_ipa = arpa_to_ipa(&actual_arpa).unwrap_or("unknown").to_string();
+        let actual_ipa = actual_segment.label.clone();
 
         // Calculate similarity between IPA phonemes
         let similarity = phoneme_similarity(expected_ipa, &actual_ipa);
@@ -90,7 +84,6 @@ pub fn score_phoneme_accuracy(
         phoneme_details.push(PhonemeAccuracy {
             expected: expected_ipa.clone(),
             actual: actual_ipa,
-            actual_arpa,
             score: similarity,
             start_time: actual_segment.begin,
             end_time: actual_segment.end,
@@ -102,7 +95,6 @@ pub fn score_phoneme_accuracy(
         phoneme_details.push(PhonemeAccuracy {
             expected: expected_phonemes[i].clone(),
             actual: String::new(),
-            actual_arpa: String::new(),
             score: 0.0, // Missing phoneme = 0 score
             start_time: 0.0,
             end_time: 0.0,
@@ -112,13 +104,11 @@ pub fn score_phoneme_accuracy(
     // Handle additional actual phonemes (not expected)
     for i in min_len..actual_phonemes.len() {
         let actual_segment = actual_phonemes[i];
-        let actual_arpa = actual_segment.label.clone();
-        let actual_ipa = arpa_to_ipa(&actual_arpa).unwrap_or("unknown").to_string();
+        let actual_ipa = actual_segment.label.clone();
 
         phoneme_details.push(PhonemeAccuracy {
             expected: String::new(),
             actual: actual_ipa,
-            actual_arpa,
             score: 0.0, // Extra phoneme = 0 score
             start_time: actual_segment.begin,
             end_time: actual_segment.end,
