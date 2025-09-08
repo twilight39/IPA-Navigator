@@ -15,7 +15,12 @@ import { Route as ProtectedRouteImport } from './routes/_protected/route'
 import { Route as AuthRouteImport } from './routes/_auth/route'
 import { Route as IndexImport } from './routes/index'
 import { Route as ProtectedTestImport } from './routes/_protected/test'
+import { Route as ProtectedFocusSessionImport } from './routes/_protected/focus-session'
+import { Route as ProtectedDemoImport } from './routes/_protected/demo'
 import { Route as ProtectedDashboardImport } from './routes/_protected/dashboard'
+import { Route as ProtectedCollectionImport } from './routes/_protected/collection'
+import { Route as ProtectedClassroomsImport } from './routes/_protected/classrooms'
+import { Route as ProtectedChaptersImport } from './routes/_protected/chapters'
 import { Route as AuthSignUpImport } from './routes/_auth/sign-up'
 import { Route as AuthSignInImport } from './routes/_auth/sign-in'
 
@@ -43,9 +48,39 @@ const ProtectedTestRoute = ProtectedTestImport.update({
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
 
+const ProtectedFocusSessionRoute = ProtectedFocusSessionImport.update({
+  id: '/focus-session',
+  path: '/focus-session',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+
+const ProtectedDemoRoute = ProtectedDemoImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+
 const ProtectedDashboardRoute = ProtectedDashboardImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+
+const ProtectedCollectionRoute = ProtectedCollectionImport.update({
+  id: '/collection',
+  path: '/collection',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+
+const ProtectedClassroomsRoute = ProtectedClassroomsImport.update({
+  id: '/classrooms',
+  path: '/classrooms',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+
+const ProtectedChaptersRoute = ProtectedChaptersImport.update({
+  id: '/chapters',
+  path: '/chapters',
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
 
@@ -100,11 +135,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSignUpImport
       parentRoute: typeof AuthRouteImport
     }
+    '/_protected/chapters': {
+      id: '/_protected/chapters'
+      path: '/chapters'
+      fullPath: '/chapters'
+      preLoaderRoute: typeof ProtectedChaptersImport
+      parentRoute: typeof ProtectedRouteImport
+    }
+    '/_protected/classrooms': {
+      id: '/_protected/classrooms'
+      path: '/classrooms'
+      fullPath: '/classrooms'
+      preLoaderRoute: typeof ProtectedClassroomsImport
+      parentRoute: typeof ProtectedRouteImport
+    }
+    '/_protected/collection': {
+      id: '/_protected/collection'
+      path: '/collection'
+      fullPath: '/collection'
+      preLoaderRoute: typeof ProtectedCollectionImport
+      parentRoute: typeof ProtectedRouteImport
+    }
     '/_protected/dashboard': {
       id: '/_protected/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof ProtectedDashboardImport
+      parentRoute: typeof ProtectedRouteImport
+    }
+    '/_protected/demo': {
+      id: '/_protected/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof ProtectedDemoImport
+      parentRoute: typeof ProtectedRouteImport
+    }
+    '/_protected/focus-session': {
+      id: '/_protected/focus-session'
+      path: '/focus-session'
+      fullPath: '/focus-session'
+      preLoaderRoute: typeof ProtectedFocusSessionImport
       parentRoute: typeof ProtectedRouteImport
     }
     '/_protected/test': {
@@ -134,12 +204,22 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 )
 
 interface ProtectedRouteRouteChildren {
+  ProtectedChaptersRoute: typeof ProtectedChaptersRoute
+  ProtectedClassroomsRoute: typeof ProtectedClassroomsRoute
+  ProtectedCollectionRoute: typeof ProtectedCollectionRoute
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
+  ProtectedDemoRoute: typeof ProtectedDemoRoute
+  ProtectedFocusSessionRoute: typeof ProtectedFocusSessionRoute
   ProtectedTestRoute: typeof ProtectedTestRoute
 }
 
 const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
+  ProtectedChaptersRoute: ProtectedChaptersRoute,
+  ProtectedClassroomsRoute: ProtectedClassroomsRoute,
+  ProtectedCollectionRoute: ProtectedCollectionRoute,
   ProtectedDashboardRoute: ProtectedDashboardRoute,
+  ProtectedDemoRoute: ProtectedDemoRoute,
+  ProtectedFocusSessionRoute: ProtectedFocusSessionRoute,
   ProtectedTestRoute: ProtectedTestRoute,
 }
 
@@ -152,7 +232,12 @@ export interface FileRoutesByFullPath {
   '': typeof ProtectedRouteRouteWithChildren
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
+  '/chapters': typeof ProtectedChaptersRoute
+  '/classrooms': typeof ProtectedClassroomsRoute
+  '/collection': typeof ProtectedCollectionRoute
   '/dashboard': typeof ProtectedDashboardRoute
+  '/demo': typeof ProtectedDemoRoute
+  '/focus-session': typeof ProtectedFocusSessionRoute
   '/test': typeof ProtectedTestRoute
 }
 
@@ -161,7 +246,12 @@ export interface FileRoutesByTo {
   '': typeof ProtectedRouteRouteWithChildren
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
+  '/chapters': typeof ProtectedChaptersRoute
+  '/classrooms': typeof ProtectedClassroomsRoute
+  '/collection': typeof ProtectedCollectionRoute
   '/dashboard': typeof ProtectedDashboardRoute
+  '/demo': typeof ProtectedDemoRoute
+  '/focus-session': typeof ProtectedFocusSessionRoute
   '/test': typeof ProtectedTestRoute
 }
 
@@ -172,15 +262,42 @@ export interface FileRoutesById {
   '/_protected': typeof ProtectedRouteRouteWithChildren
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_auth/sign-up': typeof AuthSignUpRoute
+  '/_protected/chapters': typeof ProtectedChaptersRoute
+  '/_protected/classrooms': typeof ProtectedClassroomsRoute
+  '/_protected/collection': typeof ProtectedCollectionRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
+  '/_protected/demo': typeof ProtectedDemoRoute
+  '/_protected/focus-session': typeof ProtectedFocusSessionRoute
   '/_protected/test': typeof ProtectedTestRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '' | '/sign-in' | '/sign-up' | '/dashboard' | '/test'
+  fullPaths:
+    | '/'
+    | ''
+    | '/sign-in'
+    | '/sign-up'
+    | '/chapters'
+    | '/classrooms'
+    | '/collection'
+    | '/dashboard'
+    | '/demo'
+    | '/focus-session'
+    | '/test'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '' | '/sign-in' | '/sign-up' | '/dashboard' | '/test'
+  to:
+    | '/'
+    | ''
+    | '/sign-in'
+    | '/sign-up'
+    | '/chapters'
+    | '/classrooms'
+    | '/collection'
+    | '/dashboard'
+    | '/demo'
+    | '/focus-session'
+    | '/test'
   id:
     | '__root__'
     | '/'
@@ -188,7 +305,12 @@ export interface FileRouteTypes {
     | '/_protected'
     | '/_auth/sign-in'
     | '/_auth/sign-up'
+    | '/_protected/chapters'
+    | '/_protected/classrooms'
+    | '/_protected/collection'
     | '/_protected/dashboard'
+    | '/_protected/demo'
+    | '/_protected/focus-session'
     | '/_protected/test'
   fileRoutesById: FileRoutesById
 }
@@ -233,7 +355,12 @@ export const routeTree = rootRoute
     "/_protected": {
       "filePath": "_protected/route.tsx",
       "children": [
+        "/_protected/chapters",
+        "/_protected/classrooms",
+        "/_protected/collection",
         "/_protected/dashboard",
+        "/_protected/demo",
+        "/_protected/focus-session",
         "/_protected/test"
       ]
     },
@@ -245,8 +372,28 @@ export const routeTree = rootRoute
       "filePath": "_auth/sign-up.tsx",
       "parent": "/_auth"
     },
+    "/_protected/chapters": {
+      "filePath": "_protected/chapters.tsx",
+      "parent": "/_protected"
+    },
+    "/_protected/classrooms": {
+      "filePath": "_protected/classrooms.tsx",
+      "parent": "/_protected"
+    },
+    "/_protected/collection": {
+      "filePath": "_protected/collection.tsx",
+      "parent": "/_protected"
+    },
     "/_protected/dashboard": {
       "filePath": "_protected/dashboard.tsx",
+      "parent": "/_protected"
+    },
+    "/_protected/demo": {
+      "filePath": "_protected/demo.tsx",
+      "parent": "/_protected"
+    },
+    "/_protected/focus-session": {
+      "filePath": "_protected/focus-session.tsx",
       "parent": "/_protected"
     },
     "/_protected/test": {
