@@ -127,6 +127,8 @@ type Chapter = {
   description: string | null;
   created_at: number;
   creator_name: string;
+  creator_picture_url: string | null;
+  imageUrl: string | null;
 };
 
 // ChapterFilters component
@@ -217,7 +219,19 @@ function ChapterCard({ chapter }: { chapter: Chapter }) {
 
   return (
     <div className="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-slate-200">
-      <div className="relative h-36 bg-gradient-to-r from-blue-500/10 to-indigo-500/20">
+      <div className="relative h-36 overflow-hidden">
+        {chapter.imageUrl
+          ? (
+            <img
+              src={chapter.imageUrl}
+              alt={chapter.name}
+              className="w-full h-full object-cover"
+            />
+          )
+          : (
+            <div className="w-full h-full bg-gradient-to-r from-blue-500/10 to-indigo-500/20">
+            </div>
+          )}
         <div className="absolute top-2 right-2">
           <span className={`badge ${difficultyColor} font-medium`}>
             {chapter.difficulty}
@@ -239,9 +253,21 @@ function ChapterCard({ chapter }: { chapter: Chapter }) {
         <div className="flex items-center mt-3 text-xs text-slate-500">
           <div className="avatar placeholder mr-2">
             <div className="bg-slate-200 text-slate-600 rounded-full w-6">
-              <span>
-                {chapter.creator_name ? chapter.creator_name.charAt(0) : "?"}
-              </span>
+              {chapter.creator_picture_url
+                ? (
+                  <img
+                    src={chapter.creator_picture_url}
+                    alt={chapter.creator_name || "User"}
+                    className="rounded-full"
+                  />
+                )
+                : (
+                  <span>
+                    {chapter.creator_name
+                      ? chapter.creator_name.charAt(0)
+                      : "?"}
+                  </span>
+                )}
             </div>
           </div>
           <span className="font-medium">

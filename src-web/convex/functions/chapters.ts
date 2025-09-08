@@ -22,14 +22,24 @@ export const getChapters = query({
     const userMap = new Map();
     users.forEach((user) => {
       if (user) {
-        userMap.set(user._id.toString(), user.name);
+        userMap.set(user._id.toString(), [user.name, user.picture_url]);
       }
     });
 
-    return chapters.map((chapter) => ({
-      ...chapter,
-      creator_name: userMap.get(chapter.created_by.toString()) ||
-        "Unknown User",
+    return await Promise.all(chapters.map(async (chapter) => {
+      let imageUrl = null;
+      if (chapter.imageId) {
+        imageUrl = await ctx.storage.getUrl(chapter.imageId);
+      }
+
+      return {
+        ...chapter,
+        creator_name: userMap.get(chapter.created_by.toString())[0] ||
+          "Unknown User",
+        creator_picture_url: userMap.get(chapter.created_by.toString())[1] ||
+          undefined,
+        imageUrl,
+      };
     }));
   },
 });

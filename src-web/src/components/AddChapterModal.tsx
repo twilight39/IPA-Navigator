@@ -28,6 +28,8 @@ export const ChapterCreateModal: React.FC<ChapterCreateModalProps> = ({}) => {
     const difficulty = "Beginner";
 
     let imageIds: string[] = [];
+    console.log("Attempting to upload image");
+    console.log(file);
     try {
       imageIds = await uploadFiles(file);
     } catch (error) {
@@ -38,7 +40,9 @@ export const ChapterCreateModal: React.FC<ChapterCreateModalProps> = ({}) => {
       );
     }
 
+    console.log(imageIds);
     const imageId = imageIds[0] || undefined;
+    console.log(imageId);
 
     try {
       await createChapter(
@@ -74,7 +78,12 @@ export const ChapterCreateModal: React.FC<ChapterCreateModalProps> = ({}) => {
         onSubmit={handleSubmit}
         modalID="chapter_create_modal"
       >
-        <FormUploadField label="Chapter Cover" maxSize={1} required={false}>
+        <FormUploadField
+          label="Chapter Cover"
+          maxSize={1}
+          onFilesChange={setUploadedFile}
+          required={false}
+        >
         </FormUploadField>
         <FormInputField name="chapterName" label="Chapter Name" required />
         <FormTextAreaField name="description" label="Description" />
