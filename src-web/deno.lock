@@ -2,6 +2,9 @@
   "version": "5",
   "specifiers": {
     "npm:@clerk/clerk-react@^5.31.6": "5.31.6_react@19.1.0_react-dom@19.1.0__react@19.1.0",
+    "npm:@dnd-kit/core@^6.3.1": "6.3.1_react@19.1.0_react-dom@19.1.0__react@19.1.0",
+    "npm:@dnd-kit/sortable@10": "10.0.0_@dnd-kit+core@6.3.1__react@19.1.0__react-dom@19.1.0___react@19.1.0_react@19.1.0_react-dom@19.1.0__react@19.1.0",
+    "npm:@dnd-kit/utilities@^3.2.2": "3.2.2_react@19.1.0",
     "npm:@eslint/js@^9.21.0": "9.27.0",
     "npm:@phosphor-icons/react@^2.1.10": "2.1.10_react@19.1.0_react-dom@19.1.0__react@19.1.0",
     "npm:@tailwindcss/typography@~0.5.16": "0.5.16_tailwindcss@4.1.7",
@@ -215,6 +218,39 @@
       "integrity": "sha512-Td/cdDPHmtlKr9stmo10e2pXU+PvMimDgNy5i1vXrlD0LWJJ5cdccFCtzQwqaEfPE5oSoPvAqCCmXJAuHxaWsQ==",
       "dependencies": [
         "csstype"
+      ]
+    },
+    "@dnd-kit/accessibility@3.1.1_react@19.1.0": {
+      "integrity": "sha512-2P+YgaXF+gRsIihwwY1gCsQSYnu9Zyj2py8kY5fFvUM1qm2WA2u639R6YNVfU4GWr+ZM5mqEsfHZZLoRONbemw==",
+      "dependencies": [
+        "react",
+        "tslib"
+      ]
+    },
+    "@dnd-kit/core@6.3.1_react@19.1.0_react-dom@19.1.0__react@19.1.0": {
+      "integrity": "sha512-xkGBRQQab4RLwgXxoqETICr6S5JlogafbhNsidmrkVv2YRs5MLwpjoF2qpiGjQt8S9AoxtIV603s0GIUpY5eYQ==",
+      "dependencies": [
+        "@dnd-kit/accessibility",
+        "@dnd-kit/utilities",
+        "react",
+        "react-dom",
+        "tslib"
+      ]
+    },
+    "@dnd-kit/sortable@10.0.0_@dnd-kit+core@6.3.1__react@19.1.0__react-dom@19.1.0___react@19.1.0_react@19.1.0_react-dom@19.1.0__react@19.1.0": {
+      "integrity": "sha512-+xqhmIIzvAYMGfBYYnbKuNicfSsk4RksY2XdmJhT+HAC01nix6fHCztU68jooFiMUB01Ky3F0FyOvhG/BZrWkg==",
+      "dependencies": [
+        "@dnd-kit/core",
+        "@dnd-kit/utilities",
+        "react",
+        "tslib"
+      ]
+    },
+    "@dnd-kit/utilities@3.2.2_react@19.1.0": {
+      "integrity": "sha512-+MKAJEOfaBe5SmV6t34p80MMKhjvUz0vRrvVJbPT0WElzaOJ/1xs+D+KDv+tD/NE5ujfrChEcshd4fLn0wpiqg==",
+      "dependencies": [
+        "react",
+        "tslib"
       ]
     },
     "@emnapi/core@1.4.3": {
@@ -2066,6 +2102,9 @@
     "packageJson": {
       "dependencies": [
         "npm:@clerk/clerk-react@^5.31.6",
+        "npm:@dnd-kit/core@^6.3.1",
+        "npm:@dnd-kit/sortable@10",
+        "npm:@dnd-kit/utilities@^3.2.2",
         "npm:@eslint/js@^9.21.0",
         "npm:@phosphor-icons/react@^2.1.10",
         "npm:@tailwindcss/typography@~0.5.16",

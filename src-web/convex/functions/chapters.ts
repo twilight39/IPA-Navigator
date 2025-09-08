@@ -1,6 +1,37 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server.js";
 
+export const getChapter = query({
+  args: { chapterId: v.id("chapter") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
+    const chapter = await ctx.db.get(args.chapterId);
+    if (!chapter) {
+      throw new Error("Chapter not found");
+    }
+
+    // Get creator info
+    const user = await ctx.db.get(chapter.created_by);
+
+    // Get image URL if exists
+    let imageUrl = null;
+    if (chapter.imageId) {
+      imageUrl = await ctx.storage.getUrl(chapter.imageId);
+    }
+
+    return {
+      ...chapter,
+      creator_name: user?.name || "Unknown User",
+      creator_picture_url: user?.picture_url || undefined,
+      imageUrl,
+    };
+  },
+});
+
 export const getChapters = query({
   args: {},
   handler: async (ctx) => {

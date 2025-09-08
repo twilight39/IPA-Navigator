@@ -27,7 +27,7 @@ const chapterSchema = {
   }).index("by_name", ["revoked_at", "name"]),
   excerpt: defineTable({
     text: v.string(),
-  }),
+  }).index("by_text", ["text"]),
   chapter_excerpt: defineTable({
     chapterId: v.id("chapter"),
     excerptId: v.id("excerpt"),

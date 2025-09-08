@@ -20,9 +20,10 @@ import { Route as ProtectedDemoImport } from './routes/_protected/demo'
 import { Route as ProtectedDashboardImport } from './routes/_protected/dashboard'
 import { Route as ProtectedCollectionImport } from './routes/_protected/collection'
 import { Route as ProtectedClassroomsImport } from './routes/_protected/classrooms'
-import { Route as ProtectedChaptersImport } from './routes/_protected/chapters'
 import { Route as AuthSignUpImport } from './routes/_auth/sign-up'
 import { Route as AuthSignInImport } from './routes/_auth/sign-in'
+import { Route as ProtectedChaptersIndexImport } from './routes/_protected/chapters/index'
+import { Route as ProtectedChaptersChapterIdEditImport } from './routes/_protected/chapters/$chapterId.edit'
 
 // Create/Update Routes
 
@@ -78,12 +79,6 @@ const ProtectedClassroomsRoute = ProtectedClassroomsImport.update({
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
 
-const ProtectedChaptersRoute = ProtectedChaptersImport.update({
-  id: '/chapters',
-  path: '/chapters',
-  getParentRoute: () => ProtectedRouteRoute,
-} as any)
-
 const AuthSignUpRoute = AuthSignUpImport.update({
   id: '/sign-up',
   path: '/sign-up',
@@ -95,6 +90,19 @@ const AuthSignInRoute = AuthSignInImport.update({
   path: '/sign-in',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+
+const ProtectedChaptersIndexRoute = ProtectedChaptersIndexImport.update({
+  id: '/chapters/',
+  path: '/chapters/',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+
+const ProtectedChaptersChapterIdEditRoute =
+  ProtectedChaptersChapterIdEditImport.update({
+    id: '/chapters/$chapterId/edit',
+    path: '/chapters/$chapterId/edit',
+    getParentRoute: () => ProtectedRouteRoute,
+  } as any)
 
 // Populate the FileRoutesByPath interface
 
@@ -134,13 +142,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/sign-up'
       preLoaderRoute: typeof AuthSignUpImport
       parentRoute: typeof AuthRouteImport
-    }
-    '/_protected/chapters': {
-      id: '/_protected/chapters'
-      path: '/chapters'
-      fullPath: '/chapters'
-      preLoaderRoute: typeof ProtectedChaptersImport
-      parentRoute: typeof ProtectedRouteImport
     }
     '/_protected/classrooms': {
       id: '/_protected/classrooms'
@@ -184,6 +185,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedTestImport
       parentRoute: typeof ProtectedRouteImport
     }
+    '/_protected/chapters/': {
+      id: '/_protected/chapters/'
+      path: '/chapters'
+      fullPath: '/chapters'
+      preLoaderRoute: typeof ProtectedChaptersIndexImport
+      parentRoute: typeof ProtectedRouteImport
+    }
+    '/_protected/chapters/$chapterId/edit': {
+      id: '/_protected/chapters/$chapterId/edit'
+      path: '/chapters/$chapterId/edit'
+      fullPath: '/chapters/$chapterId/edit'
+      preLoaderRoute: typeof ProtectedChaptersChapterIdEditImport
+      parentRoute: typeof ProtectedRouteImport
+    }
   }
 }
 
@@ -204,23 +219,25 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 )
 
 interface ProtectedRouteRouteChildren {
-  ProtectedChaptersRoute: typeof ProtectedChaptersRoute
   ProtectedClassroomsRoute: typeof ProtectedClassroomsRoute
   ProtectedCollectionRoute: typeof ProtectedCollectionRoute
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
   ProtectedDemoRoute: typeof ProtectedDemoRoute
   ProtectedFocusSessionRoute: typeof ProtectedFocusSessionRoute
   ProtectedTestRoute: typeof ProtectedTestRoute
+  ProtectedChaptersIndexRoute: typeof ProtectedChaptersIndexRoute
+  ProtectedChaptersChapterIdEditRoute: typeof ProtectedChaptersChapterIdEditRoute
 }
 
 const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
-  ProtectedChaptersRoute: ProtectedChaptersRoute,
   ProtectedClassroomsRoute: ProtectedClassroomsRoute,
   ProtectedCollectionRoute: ProtectedCollectionRoute,
   ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedDemoRoute: ProtectedDemoRoute,
   ProtectedFocusSessionRoute: ProtectedFocusSessionRoute,
   ProtectedTestRoute: ProtectedTestRoute,
+  ProtectedChaptersIndexRoute: ProtectedChaptersIndexRoute,
+  ProtectedChaptersChapterIdEditRoute: ProtectedChaptersChapterIdEditRoute,
 }
 
 const ProtectedRouteRouteWithChildren = ProtectedRouteRoute._addFileChildren(
@@ -232,13 +249,14 @@ export interface FileRoutesByFullPath {
   '': typeof ProtectedRouteRouteWithChildren
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
-  '/chapters': typeof ProtectedChaptersRoute
   '/classrooms': typeof ProtectedClassroomsRoute
   '/collection': typeof ProtectedCollectionRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/demo': typeof ProtectedDemoRoute
   '/focus-session': typeof ProtectedFocusSessionRoute
   '/test': typeof ProtectedTestRoute
+  '/chapters': typeof ProtectedChaptersIndexRoute
+  '/chapters/$chapterId/edit': typeof ProtectedChaptersChapterIdEditRoute
 }
 
 export interface FileRoutesByTo {
@@ -246,13 +264,14 @@ export interface FileRoutesByTo {
   '': typeof ProtectedRouteRouteWithChildren
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
-  '/chapters': typeof ProtectedChaptersRoute
   '/classrooms': typeof ProtectedClassroomsRoute
   '/collection': typeof ProtectedCollectionRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/demo': typeof ProtectedDemoRoute
   '/focus-session': typeof ProtectedFocusSessionRoute
   '/test': typeof ProtectedTestRoute
+  '/chapters': typeof ProtectedChaptersIndexRoute
+  '/chapters/$chapterId/edit': typeof ProtectedChaptersChapterIdEditRoute
 }
 
 export interface FileRoutesById {
@@ -262,13 +281,14 @@ export interface FileRoutesById {
   '/_protected': typeof ProtectedRouteRouteWithChildren
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_auth/sign-up': typeof AuthSignUpRoute
-  '/_protected/chapters': typeof ProtectedChaptersRoute
   '/_protected/classrooms': typeof ProtectedClassroomsRoute
   '/_protected/collection': typeof ProtectedCollectionRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
   '/_protected/demo': typeof ProtectedDemoRoute
   '/_protected/focus-session': typeof ProtectedFocusSessionRoute
   '/_protected/test': typeof ProtectedTestRoute
+  '/_protected/chapters/': typeof ProtectedChaptersIndexRoute
+  '/_protected/chapters/$chapterId/edit': typeof ProtectedChaptersChapterIdEditRoute
 }
 
 export interface FileRouteTypes {
@@ -278,26 +298,28 @@ export interface FileRouteTypes {
     | ''
     | '/sign-in'
     | '/sign-up'
-    | '/chapters'
     | '/classrooms'
     | '/collection'
     | '/dashboard'
     | '/demo'
     | '/focus-session'
     | '/test'
+    | '/chapters'
+    | '/chapters/$chapterId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | ''
     | '/sign-in'
     | '/sign-up'
-    | '/chapters'
     | '/classrooms'
     | '/collection'
     | '/dashboard'
     | '/demo'
     | '/focus-session'
     | '/test'
+    | '/chapters'
+    | '/chapters/$chapterId/edit'
   id:
     | '__root__'
     | '/'
@@ -305,13 +327,14 @@ export interface FileRouteTypes {
     | '/_protected'
     | '/_auth/sign-in'
     | '/_auth/sign-up'
-    | '/_protected/chapters'
     | '/_protected/classrooms'
     | '/_protected/collection'
     | '/_protected/dashboard'
     | '/_protected/demo'
     | '/_protected/focus-session'
     | '/_protected/test'
+    | '/_protected/chapters/'
+    | '/_protected/chapters/$chapterId/edit'
   fileRoutesById: FileRoutesById
 }
 
@@ -355,13 +378,14 @@ export const routeTree = rootRoute
     "/_protected": {
       "filePath": "_protected/route.tsx",
       "children": [
-        "/_protected/chapters",
         "/_protected/classrooms",
         "/_protected/collection",
         "/_protected/dashboard",
         "/_protected/demo",
         "/_protected/focus-session",
-        "/_protected/test"
+        "/_protected/test",
+        "/_protected/chapters/",
+        "/_protected/chapters/$chapterId/edit"
       ]
     },
     "/_auth/sign-in": {
@@ -371,10 +395,6 @@ export const routeTree = rootRoute
     "/_auth/sign-up": {
       "filePath": "_auth/sign-up.tsx",
       "parent": "/_auth"
-    },
-    "/_protected/chapters": {
-      "filePath": "_protected/chapters.tsx",
-      "parent": "/_protected"
     },
     "/_protected/classrooms": {
       "filePath": "_protected/classrooms.tsx",
@@ -398,6 +418,14 @@ export const routeTree = rootRoute
     },
     "/_protected/test": {
       "filePath": "_protected/test.tsx",
+      "parent": "/_protected"
+    },
+    "/_protected/chapters/": {
+      "filePath": "_protected/chapters/index.tsx",
+      "parent": "/_protected"
+    },
+    "/_protected/chapters/$chapterId/edit": {
+      "filePath": "_protected/chapters/$chapterId.edit.tsx",
       "parent": "/_protected"
     }
   }

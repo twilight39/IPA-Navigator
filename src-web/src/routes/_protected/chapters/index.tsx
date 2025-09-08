@@ -12,10 +12,10 @@ import {
   UsersThreeIcon,
 } from "@phosphor-icons/react";
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api.js";
-import { ChapterCreateModal } from "../../components/AddChapterModal.tsx";
+import { api } from "../../../../convex/_generated/api.js";
+import { ChapterCreateModal } from "../../../components/AddChapterModal.tsx";
 
-export const Route = createFileRoute("/_protected/chapters")({
+export const Route = createFileRoute("/_protected/chapters/")({
   component: ChaptersComponent,
 });
 
