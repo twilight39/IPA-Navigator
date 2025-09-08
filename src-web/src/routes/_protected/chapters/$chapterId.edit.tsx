@@ -1,4 +1,9 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useNavigate,
+  useParams,
+  useRouter,
+} from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeftIcon, EyeIcon } from "@phosphor-icons/react";
 import { useQuery } from "convex/react";
@@ -21,7 +26,14 @@ function ChapterEditorComponent() {
     chapterId,
   });
 
-  // console.log(excerpts);
+  const router = useRouter();
+  const navigate = useNavigate();
+
+  const handleBackNavigation = () => {
+    const from = router.state.location.search.from;
+
+    navigate({ to: from });
+  };
 
   const chapter = useQuery(api.functions.chapters.getChapter, {
     chapterId,
@@ -43,7 +55,7 @@ function ChapterEditorComponent() {
         <div className="flex items-center gap-4">
           <button
             type="button"
-            onClick={() => {}}
+            onClick={handleBackNavigation}
             className="btn btn-ghost btn-circle btn-sm"
           >
             <ArrowLeftIcon className="h-4 w-4" />

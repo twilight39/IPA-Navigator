@@ -132,6 +132,7 @@ function CollectionComponent() {
                         onClick={() => {
                           navigate({
                             to: "/chapters/$chapterId/edit",
+                            search: { from: "/collection" },
                             params: { chapterId: chapter._id },
                           });
                         }}
