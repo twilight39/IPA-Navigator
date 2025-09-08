@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { action, mutation, query } from "../_generated/server.js";
+import { mutation, query } from "../_generated/server.js";
 
 export const getChapters = query({
   args: {},
@@ -9,11 +9,28 @@ export const getChapters = query({
       throw new Error("Called getUsers without authentication present");
     }
 
-    return await ctx.db.query("chapter")
+    const chapters = await ctx.db.query("chapter")
       .withIndex("by_name")
       .filter((q) => q.eq(q.field("revoked_at"), undefined))
       .order("asc")
       .collect();
+
+    const userIds = [...new Set(chapters.map((chapter) => chapter.created_by))];
+
+    const users = await Promise.all(userIds.map((id) => ctx.db.get(id)));
+
+    const userMap = new Map();
+    users.forEach((user) => {
+      if (user) {
+        userMap.set(user._id.toString(), user.name);
+      }
+    });
+
+    return chapters.map((chapter) => ({
+      ...chapter,
+      creator_name: userMap.get(chapter.created_by.toString()) ||
+        "Unknown User",
+    }));
   },
 });
 
@@ -26,11 +43,25 @@ export const createChapter = mutation({
       v.literal("Intermediate"),
       v.literal("Advanced"),
     ),
+    imageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Called createChapter without authentication present");
+    }
+
+    // Verify this user exists in our database
+    const user = await ctx.db
+      .query("users")
+      .withIndex(
+        "by_token",
+        (q) => q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found in database");
     }
 
     const now = Date.now();
@@ -41,6 +72,8 @@ export const createChapter = mutation({
       created_at: now,
       updated_at: now,
       revoked_at: undefined,
+      created_by: user._id,
+      imageId: args.imageId,
     });
 
     return {

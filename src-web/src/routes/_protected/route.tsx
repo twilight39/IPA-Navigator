@@ -3,7 +3,6 @@ import {
   Link,
   Navigate,
   Outlet,
-  useMatch,
 } from "@tanstack/react-router";
 
 import { Authenticated, Unauthenticated } from "convex/react";
@@ -147,7 +146,7 @@ function ProtectedComponent() {
           <div className="flex flex-1 overflow-hidden">
             {/* Sidebar with proper animation */}
             <div
-              className={`bg-slate-50 border-r border-slate-200 overflow-hidden transition-all duration-300 ease-in-out ${
+              className={`bg-slate-100 border-r border-slate-200 overflow-hidden transition-all duration-300 ease-in-out ${
                 sidebarOpen ? "w-56" : "w-0"
               }`}
             >
@@ -190,7 +189,7 @@ function ProtectedComponent() {
             </div>
 
             {/* Page Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto bg-slate-50">
               <Outlet />
             </div>
           </div>

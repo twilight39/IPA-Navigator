@@ -5,6 +5,7 @@ const userSchema = {
   users: defineTable({
     tokenIdentifier: v.string(),
     name: v.string(),
+    picture_url: v.optional(v.string()),
   }).index("by_token", ["tokenIdentifier"])
     .index("by_name", ["name"]),
 };
@@ -18,7 +19,9 @@ const chapterSchema = {
       v.literal("Intermediate"),
       v.literal("Advanced"),
     ),
+    imageId: v.optional(v.id("_storage")),
     created_at: v.number(),
+    created_by: v.id("users"),
     updated_at: v.number(),
     revoked_at: v.optional(v.number()),
   }).index("by_name", ["revoked_at", "name"]),

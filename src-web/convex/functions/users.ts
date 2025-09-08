@@ -22,6 +22,11 @@ export const store = mutation({
       if (user.name !== identity.name) {
         await ctx.db.patch(user._id, { name: identity.name });
       }
+
+      if (user.picture_url !== identity.pictureUrl) {
+        await ctx.db.patch(user._id, { picture_url: identity.pictureUrl });
+      }
+
       return user._id;
     }
 
@@ -29,6 +34,7 @@ export const store = mutation({
     return await ctx.db.insert("users", {
       name: identity.name ?? "Anonymous",
       tokenIdentifier: identity.tokenIdentifier,
+      picture_url: identity.pictureUrl,
     });
   },
 });

@@ -21,6 +21,7 @@
     "npm:globals@^15.15.0": "15.15.0",
     "npm:react-dom@19": "19.1.0_react@19.1.0",
     "npm:react@19": "19.1.0",
+    "npm:sonner@^2.0.7": "2.0.7_react@19.1.0_react-dom@19.1.0__react@19.1.0",
     "npm:tailwindcss@^4.1.7": "4.1.7",
     "npm:typescript-eslint@^8.24.1": "8.32.1_eslint@9.27.0_typescript@5.7.3_@typescript-eslint+parser@8.32.1__eslint@9.27.0__typescript@5.7.3",
     "npm:typescript@~5.7.2": "5.7.3",
@@ -769,9 +770,6 @@
         "goober",
         "solid-js",
         "tiny-invariant"
-      ],
-      "optionalPeers": [
-        "csstype"
       ]
     },
     "@tanstack/router-generator@1.120.7_@tanstack+react-router@1.120.7__react@19.1.0__react-dom@19.1.0___react@19.1.0_react@19.1.0_react-dom@19.1.0__react@19.1.0": {
@@ -811,11 +809,8 @@
         "zod"
       ],
       "optionalPeers": [
-        "@rsbuild/core@>=1.0.2",
         "@tanstack/react-router",
-        "vite",
-        "vite-plugin-solid@^2.11.2",
-        "webpack@>=5.92.0"
+        "vite"
       ]
     },
     "@tanstack/router-utils@1.115.0": {
@@ -1127,7 +1122,6 @@
         "react"
       ],
       "optionalPeers": [
-        "@auth0/auth0-react@^2.0.1",
         "@clerk/clerk-react",
         "react"
       ],
@@ -1281,9 +1275,6 @@
         "natural-compare",
         "optionator"
       ],
-      "optionalPeers": [
-        "jiti"
-      ],
       "bin": true
     },
     "espree@10.3.0_acorn@8.14.1": {
@@ -1343,7 +1334,7 @@
         "picomatch@4.0.2"
       ],
       "optionalPeers": [
-        "picomatch@^3 || ^4"
+        "picomatch@4.0.2"
       ]
     },
     "file-entry-cache@8.0.0": {
@@ -1834,6 +1825,13 @@
         "seroval-plugins"
       ]
     },
+    "sonner@2.0.7_react@19.1.0_react-dom@19.1.0__react@19.1.0": {
+      "integrity": "sha512-W6ZN4p58k8aDKA4XPcx2hpIQXBRAgyiWVkYhT7CvK6D3iAu7xjvVyhQHg2/iaKJZ1XVJ4r7XuwGL+WGEK37i9w==",
+      "dependencies": [
+        "react",
+        "react-dom"
+      ]
+    },
     "source-map-js@1.2.1": {
       "integrity": "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="
     },
@@ -1983,17 +1981,7 @@
         "fsevents"
       ],
       "optionalPeers": [
-        "@types/node",
-        "jiti",
-        "less@*",
-        "lightningcss",
-        "sass@*",
-        "sass-embedded@*",
-        "stylus@*",
-        "sugarss@*",
-        "terser@^5.16.0",
-        "tsx",
-        "yaml@^2.4.2"
+        "@types/node"
       ],
       "bin": true
     },
@@ -2097,6 +2085,7 @@
         "npm:globals@^15.15.0",
         "npm:react-dom@19",
         "npm:react@19",
+        "npm:sonner@^2.0.7",
         "npm:tailwindcss@^4.1.7",
         "npm:typescript-eslint@^8.24.1",
         "npm:typescript@~5.7.2",
