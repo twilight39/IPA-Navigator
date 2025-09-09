@@ -121,5 +121,6 @@ export function useTTS(options: UseTTSOptions = {}) {
     stopAudio,
     isPlaying,
     error,
+    isLoading,
   };
 }
