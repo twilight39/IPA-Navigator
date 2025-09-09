@@ -23,6 +23,7 @@ import { Route as ProtectedClassroomsImport } from './routes/_protected/classroo
 import { Route as AuthSignUpImport } from './routes/_auth/sign-up'
 import { Route as AuthSignInImport } from './routes/_auth/sign-in'
 import { Route as ProtectedChaptersIndexImport } from './routes/_protected/chapters/index'
+import { Route as ProtectedChaptersChapterIdPracticeImport } from './routes/_protected/chapters/$chapterId.practice'
 import { Route as ProtectedChaptersChapterIdEditImport } from './routes/_protected/chapters/$chapterId.edit'
 
 // Create/Update Routes
@@ -96,6 +97,13 @@ const ProtectedChaptersIndexRoute = ProtectedChaptersIndexImport.update({
   path: '/chapters/',
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
+
+const ProtectedChaptersChapterIdPracticeRoute =
+  ProtectedChaptersChapterIdPracticeImport.update({
+    id: '/chapters/$chapterId/practice',
+    path: '/chapters/$chapterId/practice',
+    getParentRoute: () => ProtectedRouteRoute,
+  } as any)
 
 const ProtectedChaptersChapterIdEditRoute =
   ProtectedChaptersChapterIdEditImport.update({
@@ -199,6 +207,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedChaptersChapterIdEditImport
       parentRoute: typeof ProtectedRouteImport
     }
+    '/_protected/chapters/$chapterId/practice': {
+      id: '/_protected/chapters/$chapterId/practice'
+      path: '/chapters/$chapterId/practice'
+      fullPath: '/chapters/$chapterId/practice'
+      preLoaderRoute: typeof ProtectedChaptersChapterIdPracticeImport
+      parentRoute: typeof ProtectedRouteImport
+    }
   }
 }
 
@@ -227,6 +242,7 @@ interface ProtectedRouteRouteChildren {
   ProtectedTestRoute: typeof ProtectedTestRoute
   ProtectedChaptersIndexRoute: typeof ProtectedChaptersIndexRoute
   ProtectedChaptersChapterIdEditRoute: typeof ProtectedChaptersChapterIdEditRoute
+  ProtectedChaptersChapterIdPracticeRoute: typeof ProtectedChaptersChapterIdPracticeRoute
 }
 
 const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
@@ -238,6 +254,8 @@ const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
   ProtectedTestRoute: ProtectedTestRoute,
   ProtectedChaptersIndexRoute: ProtectedChaptersIndexRoute,
   ProtectedChaptersChapterIdEditRoute: ProtectedChaptersChapterIdEditRoute,
+  ProtectedChaptersChapterIdPracticeRoute:
+    ProtectedChaptersChapterIdPracticeRoute,
 }
 
 const ProtectedRouteRouteWithChildren = ProtectedRouteRoute._addFileChildren(
@@ -257,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/test': typeof ProtectedTestRoute
   '/chapters': typeof ProtectedChaptersIndexRoute
   '/chapters/$chapterId/edit': typeof ProtectedChaptersChapterIdEditRoute
+  '/chapters/$chapterId/practice': typeof ProtectedChaptersChapterIdPracticeRoute
 }
 
 export interface FileRoutesByTo {
@@ -272,6 +291,7 @@ export interface FileRoutesByTo {
   '/test': typeof ProtectedTestRoute
   '/chapters': typeof ProtectedChaptersIndexRoute
   '/chapters/$chapterId/edit': typeof ProtectedChaptersChapterIdEditRoute
+  '/chapters/$chapterId/practice': typeof ProtectedChaptersChapterIdPracticeRoute
 }
 
 export interface FileRoutesById {
@@ -289,6 +309,7 @@ export interface FileRoutesById {
   '/_protected/test': typeof ProtectedTestRoute
   '/_protected/chapters/': typeof ProtectedChaptersIndexRoute
   '/_protected/chapters/$chapterId/edit': typeof ProtectedChaptersChapterIdEditRoute
+  '/_protected/chapters/$chapterId/practice': typeof ProtectedChaptersChapterIdPracticeRoute
 }
 
 export interface FileRouteTypes {
@@ -306,6 +327,7 @@ export interface FileRouteTypes {
     | '/test'
     | '/chapters'
     | '/chapters/$chapterId/edit'
+    | '/chapters/$chapterId/practice'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -320,6 +342,7 @@ export interface FileRouteTypes {
     | '/test'
     | '/chapters'
     | '/chapters/$chapterId/edit'
+    | '/chapters/$chapterId/practice'
   id:
     | '__root__'
     | '/'
@@ -335,6 +358,7 @@ export interface FileRouteTypes {
     | '/_protected/test'
     | '/_protected/chapters/'
     | '/_protected/chapters/$chapterId/edit'
+    | '/_protected/chapters/$chapterId/practice'
   fileRoutesById: FileRoutesById
 }
 
@@ -385,7 +409,8 @@ export const routeTree = rootRoute
         "/_protected/focus-session",
         "/_protected/test",
         "/_protected/chapters/",
-        "/_protected/chapters/$chapterId/edit"
+        "/_protected/chapters/$chapterId/edit",
+        "/_protected/chapters/$chapterId/practice"
       ]
     },
     "/_auth/sign-in": {
@@ -426,6 +451,10 @@ export const routeTree = rootRoute
     },
     "/_protected/chapters/$chapterId/edit": {
       "filePath": "_protected/chapters/$chapterId.edit.tsx",
+      "parent": "/_protected"
+    },
+    "/_protected/chapters/$chapterId/practice": {
+      "filePath": "_protected/chapters/$chapterId.practice.tsx",
       "parent": "/_protected"
     }
   }

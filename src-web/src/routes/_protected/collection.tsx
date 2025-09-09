@@ -145,7 +145,13 @@ function CollectionComponent() {
                       <button
                         type="button"
                         className="btn btn-sm btn-primary"
-                        onClick={handlePractice}
+                        onClick={() => {
+                          navigate({
+                            to: "/chapters/$chapterId/practice",
+                            search: { from: "/collection" },
+                            params: { chapterId: chapter._id },
+                          });
+                        }}
                       >
                         <GraduationCapIcon
                           size={18}
