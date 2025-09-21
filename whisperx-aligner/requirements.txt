@@ -1,5 +1,11 @@
 # WhisperX alignment
 whisperx
+torch
+torchaudio
+transformers
+librosa
+soundfile
+phonemizer
 
 # Concurrent processing
 fastapi[standard]
