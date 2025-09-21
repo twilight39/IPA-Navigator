@@ -1,0 +1,10 @@
+# WhisperX alignment
+whisperx
+
+# Concurrent processing
+fastapi[standard]
+
+# Development dependencies
+ruff
+basedpyright
+pydantic

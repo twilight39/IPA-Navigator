@@ -1,0 +1,12 @@
+[tool.ruff]
+target-version = "py312"
+
+[tool.basedpyright]
+include = ["whisperx-aligner/app"]
+reportMissingImports = "error"
+reportMissingTypeStubs = false
+pythonVersion = "3.12"
+typeCheckingMode = "recommended"
+allowedUntypedLibraries = ["soundfile"]
+venvPath = "whisperx-aligner"
+venv=".venv"
