@@ -1,5 +1,5 @@
 import { createFileRoute, useParams } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowClockwiseIcon,
   ArrowLeftIcon,
@@ -7,6 +7,7 @@ import {
   ChartBarIcon,
   CheckIcon,
   MicrophoneIcon,
+  PlayIcon,
   SpeakerHighIcon,
   XIcon,
 } from "@phosphor-icons/react";
@@ -39,6 +40,7 @@ function ChapterPracticeComponent() {
     isRecording,
     isAnalyzing,
     reset: resetRecording,
+    audioURL,
   } = usePronunciationAnalysis();
 
   // Get chapter data
@@ -54,7 +56,6 @@ function ChapterPracticeComponent() {
   // Session state
   const [currentExcerptIndex, setCurrentExcerptIndex] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [showDetailedFeedback, setShowDetailedFeedback] = useState(false);
 
   const handleListen = () => {
     if (isPlaying) {
@@ -87,7 +88,6 @@ function ChapterPracticeComponent() {
   const handleReset = () => {
     resetRecording();
     setShowFeedback(false);
-    setShowDetailedFeedback(false);
   };
 
   const handleNextExcerpt = () => {
@@ -227,26 +227,15 @@ function ChapterPracticeComponent() {
               </h3>
               <p className="text-success-content font-zilla">
                 AI analysis complete. Your score:{" "}
-                {Math.round(analysisResult.overall_score * 100)}%
+                {Math.round(analysisResult.overall_accuracy * 100)}%
               </p>
 
               <div className="flex items-center justify-center gap-4 mt-4">
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  onClick={() => setShowDetailedFeedback(!showDetailedFeedback)}
-                >
-                  <ChartBarIcon size={16} className="mr-1" />
-                  {showDetailedFeedback ? "Hide Details" : "Show Details"}
-                </button>
-              </div>
-
-              {showDetailedFeedback && (
-                <PhonemeDetails
-                  phonemeDetails={analysisResult.phoneme_details}
-                  text={excerpts[currentExcerptIndex].text}
+                <PhonemeModal
+                  analysisData={analysisResult}
+                  audioURL={audioURL}
                 />
-              )}
+              </div>
             </div>
           )}
 
@@ -265,23 +254,23 @@ function ChapterPracticeComponent() {
                   <MicrophoneIcon size={24} weight="bold" className="mr-2" />
                   {isRecording ? "Stop Recording" : "Start Recording"}
                 </button>
-
-                {hasRecording && !showFeedback && (
-                  <button
-                    type="button"
-                    onClick={handleAnalyze}
-                    disabled={isAnalyzing || isRecording}
-                    className={`btn btn-success btn-lg btn-outline ${
-                      isAnalyzing ? "loading" : ""
-                    }`}
-                  >
-                    {!isAnalyzing && (
-                      <CheckIcon size={24} weight="bold" className="mr-2" />
-                    )}
-                    {isAnalyzing ? "Analyzing..." : "Analyze Pronunciation"}
-                  </button>
-                )}
               </>
+            )}
+
+            {hasRecording && (
+              <button
+                type="button"
+                onClick={handleAnalyze}
+                disabled={isAnalyzing || isRecording}
+                className={`btn btn-success btn-lg btn-outline ${
+                  isAnalyzing ? "loading" : ""
+                }`}
+              >
+                {!isAnalyzing && (
+                  <CheckIcon size={24} weight="bold" className="mr-2" />
+                )}
+                {isAnalyzing ? "Analyzing..." : "Analyze Pronunciation"}
+              </button>
             )}
 
             <button
@@ -322,148 +311,440 @@ function ChapterPracticeComponent() {
   );
 }
 
-// Phoneme modal component
-const PhonemeDetails = ({
-  phonemeDetails,
-  text,
+const PhonemeModal = ({
+  analysisData,
+  audioURL,
 }: {
-  phonemeDetails: any[];
-  text: string;
+  analysisData: any;
+  audioURL: string | null;
 }) => {
+  const [selectedWordIndex, setSelectedWordIndex] = useState(0);
   const [selectedPhonemeIndex, setSelectedPhonemeIndex] = useState(0);
 
-  const getScoreClass = (score: number) => {
-    if (score >= 0.9) return "bg-success text-success-content";
-    if (score >= 0.75) return "bg-info text-info-content";
-    if (score >= 0.6) return "bg-warning text-warning-content";
-    return "bg-error text-error-content";
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const playWordSegment = (wordResult: any) => {
+    if (!audioURL || !audioRef.current || !wordResult.time_boundary.start) {
+      console.warn("Cannot play word segment: missing audio or timing data");
+      return;
+    }
+
+    const audio = audioRef.current;
+    const startTime = wordResult.time_boundary.start - 0.2 > 0
+      ? wordResult.time_boundary.start - 0.2
+      : 0;
+    const endTime = wordResult.time_boundary.end - 0.3;
+
+    audio.currentTime = startTime;
+    audio.play();
+
+    const stopPlayback = () => {
+      if (audio.currentTime >= endTime) {
+        audio.pause();
+        audio.removeEventListener("timeupdate", stopPlayback);
+      }
+    };
+
+    audio.addEventListener("timeupdate", stopPlayback);
   };
 
-  const getScoreBadgeClass = (score: number) => {
-    if (score >= 0.9) return "badge-success";
-    if (score >= 0.75) return "badge-info";
-    if (score >= 0.6) return "badge-warning";
+  const getStatusColor = (status: string, accuracy: number = 1) => {
+    switch (status) {
+      case "correct":
+        return accuracy >= 0.9
+          ? "btn-success text-white"
+          : "btn-info text-white";
+      case "substitution":
+        return "btn-warning text-white";
+      case "deletion":
+        return "btn-error text-white";
+      default:
+        return "btn-neutral text-white";
+    }
+  };
+
+  const getWordAccuracyColor = (accuracy: number) => {
+    if (accuracy >= 0.9) return "badge-success";
+    if (accuracy >= 0.75) return "badge-info";
+    if (accuracy >= 0.6) return "badge-warning";
     return "badge-error";
   };
 
+  const navigateWord = (direction: "prev" | "next") => {
+    if (direction === "prev" && selectedWordIndex > 0) {
+      setSelectedWordIndex(selectedWordIndex - 1);
+      setSelectedPhonemeIndex(0);
+    } else if (
+      direction === "next" &&
+      selectedWordIndex < analysisData.word_results.length - 1
+    ) {
+      setSelectedWordIndex(selectedWordIndex + 1);
+      setSelectedPhonemeIndex(0);
+    }
+  };
+
   const navigatePhoneme = (direction: "prev" | "next") => {
+    const currentWord = analysisData.word_results[selectedWordIndex];
+    const phonemeCount = currentWord.phoneme_analysis.phoneme_results.length;
+
     if (direction === "prev" && selectedPhonemeIndex > 0) {
       setSelectedPhonemeIndex(selectedPhonemeIndex - 1);
     } else if (
-      direction === "next" && selectedPhonemeIndex < phonemeDetails.length - 1
+      direction === "next" && selectedPhonemeIndex < phonemeCount - 1
     ) {
       setSelectedPhonemeIndex(selectedPhonemeIndex + 1);
     }
   };
 
-  const currentPhoneme = phonemeDetails[selectedPhonemeIndex];
+  const getFeedbackForPhoneme = (phoneme: any) => {
+    const { target, detected, score, status } = phoneme;
 
-  // Mock feedback generation based on phoneme score
-  const generateFeedback = (phoneme: any) => {
-    const { expected, actual, score } = phoneme;
-
-    if (score >= 0.9) {
+    if (status === "correct") {
+      if (phoneme.accuracy >= 0.9) {
+        return {
+          type: "success",
+          title: "Excellent pronunciation!",
+          message:
+            `Your pronunciation of /${target}/ is spot on. Keep up the great work!`,
+        };
+      } else {
+        return {
+          type: "info",
+          title: "Good pronunciation!",
+          message:
+            `You got the /${target}/ sound right, but there's room for improvement. Practice makes perfect!`,
+        };
+      }
+    } else if (status === "substitution") {
       return {
-        feedback: `Excellent pronunciation of /${expected}/!`,
-        improvement: `Keep up the good work! Your pronunciation is spot on.`,
+        type: "warning",
+        title: "Substitution detected",
+        message:
+          `You pronounced /${detected}/ instead of /${target}/. Try focusing on the target sound and comparing it to the reference audio.`,
       };
-    } else if (score >= 0.75) {
+    } else if (status === "deletion") {
       return {
-        feedback:
-          `Good pronunciation of /${expected}/, but there's room for improvement.`,
-        improvement: `Try to focus on the precise articulation of this sound.`,
-      };
-    } else if (score >= 0.6) {
-      return {
-        feedback: `Your pronunciation of /${expected}/ needs some work.`,
-        improvement:
-          `Listen carefully to the reference audio and try to mimic the exact sound.`,
+        type: "error",
+        title: "Sound missed",
+        message:
+          `The /${target}/ sound wasn't detected in your pronunciation. Make sure to pronounce this sound clearly and practice the word slowly.`,
       };
     } else {
       return {
-        feedback:
-          `You pronounced /${expected}/ more like /${actual}/. This needs improvement.`,
-        improvement:
-          `Practice this sound in isolation, then in words. Pay attention to mouth and tongue position.`,
+        type: "neutral",
+        title: "Keep practicing",
+        message:
+          `Continue working on the /${target}/ sound. Listen to the reference and try to match it closely.`,
       };
     }
   };
 
-  const feedback = generateFeedback(currentPhoneme);
+  if (analysisData.word_results.length === 0) return null;
+
+  const currentWord = analysisData.word_results[selectedWordIndex];
+  const currentPhoneme =
+    currentWord.phoneme_analysis.phoneme_results[selectedPhonemeIndex];
+  const feedback = getFeedbackForPhoneme(currentPhoneme);
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-bold">Detailed Phoneme Analysis</h3>
+    <>
+      {/* Hidden audio element for word playback */}
+      {audioURL && <audio ref={audioRef} src={audioURL} preload="auto" />}
 
-      {/* Phoneme visualization */}
-      <div className="overflow-x-auto p-1">
-        <div className="flex flex-wrap gap-2">
-          {phonemeDetails.map((phoneme, index) => (
-            <button
-              key={index}
-              onClick={() => setSelectedPhonemeIndex(index)}
-              className={`px-2 py-1 rounded font-mono text-xs ${
-                getScoreClass(phoneme.score)
-              }
-                          ${
-                selectedPhonemeIndex === index
-                  ? "ring-2 ring-primary transform scale-110"
-                  : ""
-              }
-                          cursor-pointer hover:opacity-90`}
-            >
-              /{phoneme.expected}/
-            </button>
-          ))}
-        </div>
-      </div>
+      <button
+        className="btn btn-primary"
+        onClick={() =>
+          (document.getElementById("phoneme_modal") as HTMLDialogElement)
+            ?.showModal()}
+      >
+        <ChartBarIcon size={16} className="mr-1" />
+        Detailed Analysis
+      </button>
 
-      {/* Selected phoneme details */}
-      <div className="bg-base-200 p-4 rounded-lg">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <span className="text-xl font-mono font-bold">
-              /{currentPhoneme?.expected}/
-            </span>
-            <div
-              className={`badge ${getScoreBadgeClass(currentPhoneme?.score)}`}
-            >
-              {Math.round(currentPhoneme?.score * 100)}%
+      <dialog id="phoneme_modal" className="modal">
+        <div className="modal-box max-w-4xl bg-base-100 max-h-[80vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-lg">Detailed Phoneme Analysis</h3>
+            <form method="dialog">
+              <button className="btn btn-sm btn-circle btn-ghost">✕</button>
+            </form>
+          </div>
+
+          <div className="space-y-6">
+            {/* Overall Accuracy */}
+            <div className="bg-base-200 p-4 rounded-lg">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Overall Accuracy</span>
+                <div
+                  className={`badge ${
+                    getWordAccuracyColor(analysisData.overall_accuracy)
+                  } badge-lg`}
+                >
+                  {Math.round(analysisData.overall_accuracy * 100)}%
+                </div>
+              </div>
+            </div>
+
+            {/* Word-by-Word Analysis */}
+            <div className="space-y-3">
+              <h4 className="font-medium">Word-by-Word Analysis</h4>
+              <div className="flex flex-wrap gap-3 text-lg">
+                {analysisData.word_results.map((
+                  wordResult: any,
+                  wordIndex: number,
+                ) => (
+                  <div
+                    key={wordIndex}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <div className="flex flex-col items-center">
+                      <button
+                        onClick={() => {
+                          setSelectedWordIndex(wordIndex);
+                          setSelectedPhonemeIndex(0);
+                        }}
+                        className={`btn btn-outline ${
+                          selectedWordIndex === wordIndex
+                            ? "btn-primary"
+                            : "btn-ghost"
+                        }`}
+                      >
+                        <span className="font-medium">{wordResult.word}</span>
+                      </button>
+
+                      <div
+                        className={`badge mt-1 ${
+                          getWordAccuracyColor(wordResult.word_accuracy)
+                        }`}
+                      >
+                        {Math.round(wordResult.word_accuracy * 100)}%
+                      </div>
+                    </div>
+
+                    {/* Phonemes for this word */}
+                    <div className="flex gap-1 flex-wrap">
+                      {wordResult.phoneme_analysis.phoneme_results.map((
+                        phoneme: any,
+                        phonemeIndex: number,
+                      ) => (
+                        <button
+                          key={phonemeIndex}
+                          onClick={() => {
+                            setSelectedWordIndex(wordIndex);
+                            setSelectedPhonemeIndex(phonemeIndex);
+                          }}
+                          className={`btn btn-xs font-mono ${
+                            selectedWordIndex === wordIndex &&
+                              selectedPhonemeIndex === phonemeIndex
+                              ? "ring-2 ring-primary transform scale-110"
+                              : ""
+                          } ${
+                            getStatusColor(phoneme.status, phoneme.accuracy)
+                          }`}
+                          title={`${phoneme.status} - ${
+                            Math.round(phoneme.accuracy * 100)
+                          }% accurate`}
+                        >
+                          /{phoneme.target}/
+                          {phoneme.status === "substitution" &&
+                            phoneme.detected && (
+                            <div className="text-[10px] opacity-80">
+                              →{phoneme.detected}
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Selected word and phoneme details */}
+            <div className="bg-base-200 p-6 rounded-lg">
+              {/* Word-level controls */}
+              <div className="flex items-center justify-between mb-4 pb-4 border-b border-base-300">
+                <div className="flex items-center gap-3">
+                  <span className="text-xl font-semibold">
+                    {currentWord.word}
+                  </span>
+                  <div
+                    className={`badge ${
+                      getWordAccuracyColor(currentWord.word_accuracy)
+                    } badge-lg`}
+                  >
+                    {Math.round(currentWord.word_accuracy * 100)}%
+                  </div>
+                  {currentWord.transcribed_as !== currentWord.word && (
+                    <span className="text-sm text-error">
+                      → "{currentWord.transcribed_as || "not detected"}"
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => navigateWord("prev")}
+                    disabled={selectedWordIndex === 0}
+                  >
+                    <ArrowLeftIcon size={16} />
+                  </button>
+                  <span className="text-sm">
+                    {selectedWordIndex + 1} of{" "}
+                    {analysisData.word_results.length}
+                  </span>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => navigateWord("next")}
+                    disabled={selectedWordIndex ===
+                      analysisData.word_results.length - 1}
+                  >
+                    <ArrowRightIcon size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Word actions */}
+              <div className="flex gap-2 mb-4">
+                {currentWord.time_boundary &&
+                  currentWord.time_boundary.start !== null && audioURL && (
+                  <button
+                    className="btn btn-outline btn-sm"
+                    type="button"
+                    onClick={() => playWordSegment(currentWord)}
+                  >
+                    <PlayIcon size={16} className="mr-2" />
+                    Replay Word
+                  </button>
+                )}
+                <button className="btn btn-outline btn-sm">
+                  <SpeakerHighIcon size={16} className="mr-2" />
+                  Reference
+                </button>
+                <button className="btn btn-success btn-sm">
+                  Practice Word
+                </button>
+              </div>
+
+              {/* Phoneme-level details */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Phoneme Analysis</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={() => navigatePhoneme("prev")}
+                      disabled={selectedPhonemeIndex === 0}
+                    >
+                      <ArrowLeftIcon size={16} />
+                    </button>
+                    <span className="text-sm">
+                      {selectedPhonemeIndex + 1} of{" "}
+                      {currentWord.phoneme_analysis.phoneme_results.length}
+                    </span>
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={() => navigatePhoneme("next")}
+                      disabled={selectedPhonemeIndex ===
+                        currentWord.phoneme_analysis.phoneme_results.length - 1}
+                    >
+                      <ArrowRightIcon size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-base-100 p-4 rounded-lg space-y-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="text-2xl font-mono font-bold bg-base-200 px-3 py-1 rounded">
+                      /{currentPhoneme.target}/
+                    </span>
+                    {currentPhoneme.detected &&
+                      currentPhoneme.detected !== currentPhoneme.target && (
+                      <>
+                        <span className="text-base-content/50">→</span>
+                        <span className="text-xl font-mono font-bold bg-base-200 px-3 py-1 rounded">
+                          /{currentPhoneme.detected}/
+                        </span>
+                      </>
+                    )}
+                    <div
+                      className={`badge ${
+                        getWordAccuracyColor(currentPhoneme.accuracy)
+                      } badge-lg`}
+                    >
+                      {currentPhoneme.status} -{" "}
+                      {Math.round(currentPhoneme.accuracy * 100)}%
+                    </div>
+                  </div>
+
+                  {currentPhoneme.confidence && (
+                    <div className="text-sm">
+                      <span className="font-medium">Confidence:</span>{" "}
+                      {Math.round(currentPhoneme.confidence * 100)}%
+                    </div>
+                  )}
+
+                  {currentPhoneme.timing && (
+                    <div className="text-sm">
+                      <span className="font-medium">Timing:</span>{" "}
+                      {currentPhoneme.timing.start.toFixed(2)}s -{" "}
+                      {currentPhoneme.timing.end.toFixed(2)}s
+                    </div>
+                  )}
+
+                  {/* Status-specific feedback */}
+                  <div
+                    className={`alert ${
+                      feedback.type === "success"
+                        ? "alert-success"
+                        : feedback.type === "info"
+                        ? "alert-info"
+                        : feedback.type === "warning"
+                        ? "alert-warning"
+                        : feedback.type === "error"
+                        ? "alert-error"
+                        : "alert-neutral"
+                    }`}
+                  >
+                    <div>
+                      <h3 className="font-bold">{feedback.title}</h3>
+                      <div className="text-sm">{feedback.message}</div>
+                    </div>
+                  </div>
+
+                  {/* Improvement Tips */}
+                  {currentPhoneme.accuracy < 0.8 && (
+                    <div className="bg-base-200 p-3 rounded">
+                      <h4 className="font-medium mb-2">Improvement Tips:</h4>
+                      <ul className="text-sm space-y-1">
+                        <li>
+                          • Listen carefully to the reference pronunciation
+                        </li>
+                        <li>
+                          • Practice the sound in isolation before using it in
+                          words
+                        </li>
+                        <li>• Record yourself and compare with the target</li>
+                        <li>• Pay attention to tongue and lip position</li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              className="btn btn-sm btn-outline"
-              onClick={() => navigatePhoneme("prev")}
-              disabled={selectedPhonemeIndex === 0}
-            >
-              <ArrowLeftIcon size={14} />
-            </button>
-            <span className="text-sm">
-              {selectedPhonemeIndex + 1} of {phonemeDetails.length}
-            </span>
-            <button
-              className="btn btn-sm btn-outline"
-              onClick={() => navigatePhoneme("next")}
-              disabled={selectedPhonemeIndex === phonemeDetails.length - 1}
-            >
-              <ArrowRightIcon size={14} />
-            </button>
+          <div className="modal-action">
+            <form method="dialog">
+              <button className="btn">Close</button>
+            </form>
           </div>
         </div>
-
-        <div className="space-y-2 bg-base-100 p-4 rounded-lg">
-          <div>
-            <span className="font-medium">Feedback:</span>
-            <span>{feedback.feedback}</span>
-          </div>
-          <div>
-            <span className="font-medium">How to improve:</span>
-            <span>{feedback.improvement}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+    </>
   );
 };

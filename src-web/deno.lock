@@ -24,6 +24,7 @@
     "npm:globals@^15.15.0": "15.15.0",
     "npm:react-dom@19": "19.1.0_react@19.1.0",
     "npm:react@19": "19.1.0",
+    "npm:recordrtc@^5.6.2": "5.6.2",
     "npm:sonner@^2.0.7": "2.0.7_react@19.1.0_react-dom@19.1.0__react@19.1.0",
     "npm:tailwindcss@^4.1.7": "4.1.7",
     "npm:typescript-eslint@^8.24.1": "8.32.1_eslint@9.27.0_typescript@5.7.3_@typescript-eslint+parser@8.32.1__eslint@9.27.0__typescript@5.7.3",
@@ -1779,6 +1780,9 @@
         "picomatch@2.3.1"
       ]
     },
+    "recordrtc@5.6.2": {
+      "integrity": "sha512-1QNKKNtl7+KcwD1lyOgP3ZlbiJ1d0HtXnypUy7yq49xEERxk31PHvE9RCciDrulPCY7WJ+oz0R9hpNxgsIurGQ=="
+    },
     "resolve-from@4.0.0": {
       "integrity": "sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g=="
     },
@@ -2124,6 +2128,7 @@
         "npm:globals@^15.15.0",
         "npm:react-dom@19",
         "npm:react@19",
+        "npm:recordrtc@^5.6.2",
         "npm:sonner@^2.0.7",
         "npm:tailwindcss@^4.1.7",
         "npm:typescript-eslint@^8.24.1",
