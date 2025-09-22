@@ -1,10 +1,10 @@
 # WhisperX alignment
 whisperx
+
+# Wav2Vec2 alignment
 torch
 torchaudio
 transformers
-librosa
-soundfile
 phonemizer
 
 # Concurrent processing
