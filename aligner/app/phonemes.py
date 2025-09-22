@@ -1,7 +1,7 @@
 from phonemizer import phonemize
 from typing import TypedDict, cast, Literal
 import panphon
-from scipy.spatial.distance import hamming
+from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from functools import lru_cache
 import difflib
@@ -53,6 +53,8 @@ def calculate_phoneme_similarity(phoneme1: str, phoneme2: str) -> float:
         return calculate_phoneme_similarity_rule_based(phoneme1, phoneme2)
 
     try:
+        print(f"Calculating similarity between '{phoneme1}' and '{phoneme2}' using panphon...")
+
         # Get feature vectors from panphon
         features1 = ft.word_fts(phoneme1)[0] if ft.word_fts(phoneme1) else None
         features2 = ft.word_fts(phoneme2)[0] if ft.word_fts(phoneme2) else None
@@ -62,19 +64,13 @@ def calculate_phoneme_similarity(phoneme1: str, phoneme2: str) -> float:
             return calculate_phoneme_similarity_rule_based(phoneme1, phoneme2)
 
         # Convert feature dict to binary vector
-        vec1 = np.array(
-            [1 if v == "+" else 0 if v == "-" else 0.5 for v in features1.values()]
-        )
-        vec2 = np.array(
-            [1 if v == "+" else 0 if v == "-" else 0.5 for v in features2.values()]
-        )
+        vec1 = np.array(list(features1), dtype=np.float32).reshape(1, -1)
+        vec2 = np.array(list(features2), dtype=np.float32).reshape(1, -1)
 
-        # Calculate similarity using normalized hamming distance
-        hamming_dist = hamming(vec1, vec2)
-        similarity = 1.0 - hamming_dist
+        cos_sim = cosine_similarity(vec1, vec2)[0][0]
+        similarity = (cos_sim + 1) / 2.0
 
-        # Apply minimum threshold for phonemes that share some features
-        return max(0.1, similarity) if similarity > 0.5 else max(0.05, similarity)
+        return min(0.95, similarity)
 
     except Exception as e:
         print(f"Error calculating phoneme similarity with panphon: {e}")
@@ -355,6 +351,7 @@ def calculate_phoneme_similarity_rule_based(phoneme1: str, phoneme2: str) -> flo
             weighted_shared += weight
 
     similarity = weighted_shared / weighted_total if weighted_total > 0 else 0.0
+    similarity = min(0.95, similarity)
 
     # Apply minimum thresholds based on feature sharing
     if similarity > 0.7:

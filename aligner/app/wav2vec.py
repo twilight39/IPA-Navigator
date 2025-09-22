@@ -29,6 +29,7 @@ print("Wav2Vec2 model loaded successfully.")
 
 def preprocess_audio(audio_buffer: io.BytesIO) -> torch.Tensor:
     """Load and preprocess audio for wav2vec2."""
+    start_time = time.perf_counter()
     audio, orig_sr = torchaudio.load(audio_buffer)
 
     # Convert to mono if stereo
@@ -42,6 +43,8 @@ def preprocess_audio(audio_buffer: io.BytesIO) -> torch.Tensor:
 
     # Flatten to 1D
     audio = audio.squeeze()
+    end_time = time.perf_counter()
+    print(f"Audio preprocessing completed in {end_time - start_time:.4f} seconds.")
     return audio
 
 

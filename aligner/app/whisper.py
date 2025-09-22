@@ -71,7 +71,7 @@ def fuzzy_word_alignment(
                 trans_idx = j1 + k
                 word_alignments[exp_idx].update(
                     {
-                        "transcribed_word": whisperx_segments[trans_idx]["word"],
+                        "transcribed_word": expected_words[exp_idx],
                         "confidence": 1.0,
                         "start_time": whisperx_segments[trans_idx]["start"],
                         "end_time": whisperx_segments[trans_idx]["end"],
@@ -102,7 +102,7 @@ def fuzzy_word_alignment(
                     exp_idx = i1 + i
                     word_alignments[exp_idx].update(
                         {
-                            "transcribed_word": best_match["word"],
+                            "transcribed_word": exp_word,
                             "confidence": best_score,
                             "start_time": best_match["start"],
                             "end_time": best_match["end"],

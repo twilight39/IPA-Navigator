@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from .wav2vec import (
     phoneme_align,
@@ -13,6 +14,14 @@ from concurrent.futures import ThreadPoolExecutor
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Should be restricted in production
+    allow_credentials=True,
+    allow_methods=["POST"],
+    allow_headers=["*"],
+)
+
 executor = ThreadPoolExecutor(max_workers=3)
 
 
@@ -20,7 +29,6 @@ class AlignmentRequest(BaseModel):
     audio_data: str
     transcript: str
     accent: str = "us"
-
 
 @app.post("/align")
 async def align_audio(request: AlignmentRequest):
