@@ -36,6 +36,9 @@ dist-ssr
 src-server/target/
 **/*.rs.bk
 Cargo.lock
+src-server/ipa-navigator-mfa/data/test_job
+aligner/models
+aligner/tests
 
 # Python-specific
 __pycache__/
