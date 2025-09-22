@@ -1,11 +1,11 @@
 import torch
-import os
 import base64
-import tempfile
 from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
 import numpy as np
 import torchaudio
 from typing import TypedDict
+
+# from warnings import deprecated # Sadly only in Python 3.13+
 from fastapi import HTTPException
 import difflib
 import time
@@ -196,6 +196,7 @@ def extract_phonemes_by_timespan(
     return extracted_phonemes
 
 
+# @deprecated(reason="Use phonemes.calculate_phoneme_similarity instead", version="1.0.0")
 def calculate_phoneme_accuracy(
     detected: list[Phoneme], target: list[str]
 ) -> dict[str, ...]:
