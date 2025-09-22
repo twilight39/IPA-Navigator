@@ -37,6 +37,14 @@ src-server/target/
 **/*.rs.bk
 Cargo.lock
 
+# Python-specific
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
 # Temporary files
 tmp/
 temp/

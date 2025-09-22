@@ -1,0 +1,16 @@
+# WhisperX alignment
+whisperx
+
+# Wav2Vec2 alignment
+torch
+torchaudio
+transformers
+phonemizer
+
+# Concurrent processing
+fastapi[standard]
+
+# Development dependencies
+ruff
+basedpyright
+pydantic
