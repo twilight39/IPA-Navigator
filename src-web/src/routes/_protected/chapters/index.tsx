@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { // @ts-types="react"
+  useEffect,
+  useState,
+} from "react";
 import {
   BookmarkSimpleIcon,
   BookOpenTextIcon,
@@ -7,13 +10,17 @@ import {
   GraduationCapIcon,
   HeartIcon,
   MagnifyingGlassIcon,
+  NotePencilIcon,
   PlusCircleIcon,
   ShareNetworkIcon,
   UsersThreeIcon,
 } from "@phosphor-icons/react";
-import { useQuery } from "convex/react";
+import { useStoreUserEffect } from "../../../hooks/useStoreUserEffect.tsx";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api.js";
 import { ChapterCreateModal } from "../../../components/AddChapterModal.tsx";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_protected/chapters/")({
   component: ChaptersComponent,
@@ -30,9 +37,10 @@ const categories = [
 function ChaptersComponent() {
   const [activeTab, setActiveTab] = useState("explore");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
   const chapters: Chapter[] =
     useQuery(api.functions.chapters.getChapters, {}) || [];
+  const { userId, isLoading } = useStoreUserEffect();
 
   console.log(chapters);
 
@@ -84,12 +92,12 @@ function ChaptersComponent() {
           </a>
           <a
             className={`tab px-4 py-2 flex items-center rounded-lg ${
-              activeTab === "saved" ? "bg-slate-200 tab-active" : ""
+              activeTab === "bookmarked" ? "bg-slate-200 tab-active" : ""
             }`}
-            onClick={() => setActiveTab("saved")}
+            onClick={() => setActiveTab("bookmarked")}
           >
             <BookmarkSimpleIcon size={18} className="mr-2" />
-            Saved
+            Bookmarked
           </a>
           <a
             className={`tab px-4 py-2 flex items-center rounded-lg ${
@@ -106,15 +114,20 @@ function ChaptersComponent() {
       <ChapterFilters
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        selectedCategories={selectedCategory}
+        setSelectedCategories={setSelectedCategory}
       />
 
       <ChapterGrid
-        chapters={chapters}
+        chapters={activeTab === "my-chapters"
+          ? chapters.filter((chapter) => chapter.created_by === userId)
+          : activeTab === "bookmarked"
+          ? chapters.filter((chapter) => chapter.isBookmarked)
+          : chapters}
         activeTab={activeTab}
         searchQuery={searchQuery}
-        selectedCategory={selectedCategory}
+        selectedCategories={selectedCategory}
+        userId={userId}
       />
 
       <ChapterCreateModal />
@@ -125,17 +138,21 @@ function ChaptersComponent() {
 type Chapter = {
   _id: string;
   name: string;
+  categories: [{ name: string; _id: string }];
   difficulty: string;
   description: string | null;
   created_at: number;
+  created_by: string;
   creator_name: string;
   creator_picture_url: string | null;
   imageUrl: string | null;
+  isLiked: boolean;
+  isBookmarked: boolean;
 };
 
 // ChapterFilters component
 const ChapterFilters = (
-  { searchQuery, setSearchQuery, selectedCategory, setSelectedCategory },
+  { searchQuery, setSearchQuery, selectedCategories, setSelectedCategories },
 ) => {
   return (
     <div>
@@ -153,22 +170,38 @@ const ChapterFilters = (
         />
       </div>
 
-      <div className="flex flex-wrap gap-2 mt-3">
-        {categories.map((category) => (
-          <button
+      <form
+        className="flex flex-wrap gap-2 mt-3"
+        onReset={() => setSelectedCategories([])}
+      >
+        {categories.filter((c) => c.value !== "all").map((category) => (
+          <input
             key={category.value}
-            onClick={() => setSelectedCategory(category.value)}
-            className={`px-3 py-1.5 rounded-full text-sm transition-colors font-medium ${
-              selectedCategory === category.value
-                ? "bg-blue-100 text-blue-800 border border-blue-200"
-                : "bg-white text-slate-800 border border-slate-200 hover:bg-slate-100"
+            className={`btn btn-sm ${
+              selectedCategories?.includes(category.value)
+                ? "btn-primary"
+                : "btn-ghost"
             }`}
-            type="button"
-          >
-            {category.label}
-          </button>
+            type="checkbox"
+            name="categories"
+            aria-label={category.label}
+            checked={selectedCategories?.includes(category.value)}
+            onChange={() => {
+              setSelectedCategories((prev) =>
+                prev !== undefined && prev.includes(category.value)
+                  ? prev.filter((v) => v !== category.value)
+                  : [...prev, category.value]
+              );
+            }}
+          />
         ))}
-      </div>
+        <input
+          className="btn btn-square btn-sm"
+          type="reset"
+          value="×"
+          aria-label="Clear filters"
+        />
+      </form>
     </div>
   );
 };
@@ -178,37 +211,77 @@ function ChapterGrid({
   chapters,
   activeTab,
   searchQuery,
-  selectedCategory,
+  selectedCategories,
+  userId,
 }: {
   chapters: Chapter[];
   activeTab: string;
   searchQuery: string;
-  selectedCategory: string;
+  selectedCategories: string[];
+  userId: string | null;
 }) {
+  const filteredChapters = chapters.filter((chapter) => {
+    // Search filter
+    const matchesSearch = chapter.name
+      ? chapter.name.toLowerCase().includes(searchQuery.toLowerCase())
+      : false;
+
+    // Category filter
+    let matchesCategory = true;
+    if (selectedCategories.length > 0) {
+      // Check if any of the chapter's categories match any selected filter
+      matchesCategory = selectedCategories.every((filter) =>
+        chapter.categories?.some((cat) =>
+          cat.name.toLowerCase() === filter.toLowerCase()
+        )
+      );
+    }
+
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-      {chapters.map((chapter) => (
-        <ChapterCard key={chapter._id} chapter={chapter} />
+      {filteredChapters.map((chapter) => (
+        <ChapterCard key={chapter._id} chapter={chapter} userId={userId} />
       ))}
     </div>
   );
 }
 
 // ChapterCard component
-function ChapterCard({ chapter }: { chapter: Chapter }) {
-  const [isLiked, setIsLiked] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+function ChapterCard(
+  { chapter, userId }: { chapter: Chapter; userId: string | null },
+) {
+  const [isLiked, setIsLiked] = useState(chapter.isLiked);
+  const [isBookmarked, setIsBookmarked] = useState(chapter.isBookmarked);
+  const navigate = useNavigate();
 
-  const handleLike = () => setIsLiked(!isLiked);
-  const handleSave = () => setIsSaved(!isSaved);
-  const handleShare = () => {
-    // In a real app, implement share functionality
-    console.log("Sharing chapter:", chapter.name);
+  const toggleLike = useMutation(api.functions.social.toggleLike);
+  const toggleBookmark = useMutation(api.functions.social.toggleBookmark);
+
+  useEffect(() => {
+    setIsLiked(chapter.isLiked);
+    setIsBookmarked(chapter.isBookmarked);
+  }, [chapter.isLiked, chapter.isBookmarked]);
+
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    toggleLike({ chapterId: chapter._id });
   };
-
-  const handlePractice = () => {
-    // In a real app, navigate to practice page
-    console.log("Practice chapter:", chapter.name);
+  const handleBookmark = () => {
+    setIsBookmarked(!isBookmarked);
+    toggleBookmark({ chapterId: chapter._id });
+  };
+  const handleShare = async () => {
+    const url =
+      `${import.meta.env.VITE_APP_URL}/chapters/${chapter._id}/practice`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard!");
+    } catch (err) {
+      toast.error("Failed to copy link.");
+    }
   };
 
   const difficultyColor = {
@@ -279,7 +352,7 @@ function ChapterCard({ chapter }: { chapter: Chapter }) {
           <span>{formattedDate}</span>
         </div>
 
-        <div className="card-actions justify-between items-center mt-4">
+        <div className="card-actions flex justify-between items-center mt-4">
           <div className="flex space-x-1">
             <button
               className={`btn btn-sm btn-ghost btn-square ${
@@ -291,13 +364,13 @@ function ChapterCard({ chapter }: { chapter: Chapter }) {
             </button>
             <button
               className={`btn btn-sm btn-ghost btn-square ${
-                isSaved ? "text-blue-500" : ""
+                isBookmarked ? "text-blue-500" : ""
               }`}
-              onClick={handleSave}
+              onClick={handleBookmark}
             >
               <BookmarkSimpleIcon
                 size={18}
-                weight={isSaved ? "fill" : "regular"}
+                weight={isBookmarked ? "fill" : "regular"}
               />
             </button>
             <button
@@ -307,11 +380,35 @@ function ChapterCard({ chapter }: { chapter: Chapter }) {
               <ShareNetworkIcon size={18} weight="regular" />
             </button>
           </div>
-
-          <button className="btn btn-sm btn-primary" onClick={handlePractice}>
-            <GraduationCapIcon size={18} className="mr-1" weight="fill" />
-            Practice
-          </button>
+          <div className="flex space-x-2">
+            {userId === chapter.created_by && (
+              <button
+                className="btn btn-sm btn-ghost btn-square"
+                onClick={() => {
+                  navigate({
+                    search: { from: "/chapters" },
+                    to: "/chapters/$chapterId/edit",
+                    params: { chapterId: chapter._id },
+                  });
+                }}
+              >
+                <NotePencilIcon size={18} />
+              </button>
+            )}
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={() => {
+                navigate({
+                  search: { from: "/chapters" },
+                  to: "/chapters/$chapterId/practice",
+                  params: { chapterId: chapter._id },
+                });
+              }}
+            >
+              <GraduationCapIcon size={18} className="mr-1" weight="fill" />
+              Practice
+            </button>
+          </div>
         </div>
       </div>
     </div>

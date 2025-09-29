@@ -2,15 +2,14 @@ import { // @ts-types="react"
   useEffect,
   useState,
 } from "react";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api.js";
 import { PencilIcon, SparkleIcon, TrashIcon } from "@phosphor-icons/react";
-import { useChapterOptions } from "../../hooks/useChapterOptions.tsx";
 import { useFileUpload } from "../../hooks/useFileUpload.tsx";
 import { toast } from "sonner";
 import {
   CategorySuggestion,
-  CategoryWithAssignment,
 } from "../../components/ChapterCategories/types.tsx";
 import { CategorySelector } from "../../components/ChapterCategories/CategorySelector.tsx";
 
@@ -22,22 +21,23 @@ interface SettingsContentProps {
 export function SettingsContent(
   { chapterId, onSaveStatusChange }: SettingsContentProps,
 ) {
+  const router = useRouter();
+  const navigate = useNavigate();
+
   const chapter = useQuery(api.functions.chapters.getChapter, { chapterId });
   const updateChapter = useMutation(api.functions.chapters.updateChapter);
+  const revokeChapter = useMutation(api.functions.chapters.revokeChapter);
   const { uploadFiles, isUploading } = useFileUpload();
 
   const [localName, setLocalName] = useState(chapter.name);
   const [localDescription, setLocalDescription] = useState("");
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<
-    CategoryWithAssignment[]
-  >([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [suggestions, setSuggestions] = useState<CategorySuggestion[]>([]);
 
   useEffect(() => {
     if (chapter) {
       setLocalName(chapter.name);
       setLocalDescription(chapter.description);
-      setSelectedCategoryIds(chapter.categoryIds || []);
     }
   }, [chapter]);
 
@@ -200,21 +200,78 @@ export function SettingsContent(
               </p>
             </div>
 
-            <button
-              type="button"
-              className="btn btn-primary btn-sm gap-2"
-            >
-              <SparkleIcon size={16} />
-              Generate AI Suggestions
-            </button>
+            {false && (
+              <button
+                type="button"
+                className="btn btn-primary btn-sm gap-2"
+              >
+                <SparkleIcon size={16} />
+                Generate AI Suggestions
+              </button>
+            )}
           </div>
 
           <CategorySelector
             chapter={chapter}
             handleChange={handleChange}
           />
+
+          <div className="item-gap-2 mt-6">
+            <h3 className="card-title text-lg">
+              Danger Zone
+            </h3>
+            <div className="flex justify-start mt-2">
+              <button
+                className="btn btn-error btn-outline gap-2 cursor-pointer"
+                onClick={() => setShowDeleteModal(true)}
+                type="button"
+              >
+                <TrashIcon size={18} />
+                Delete Chapter
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+      {showDeleteModal && (
+        <dialog open className="modal modal-open">
+          <form
+            method="dialog"
+            className="modal-box"
+            onSubmit={(e) => e.preventDefault()}
+          >
+            <h3 className="font-bold text-lg">Delete Chapter?</h3>
+            <p className="py-4">
+              Are you sure you want to delete this chapter? This action cannot
+              be undone.
+            </p>
+            <div className="modal-action">
+              <button
+                className="btn"
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-error"
+                type="button"
+                onClick={() => {
+                  revokeChapter({ chapterId });
+                  setShowDeleteModal(false);
+                  toast.success("Chapter deleted!");
+
+                  const from = router.state.location.search.from;
+
+                  navigate({ to: from });
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </form>
+        </dialog>
+      )}
     </div>
   );
 }
