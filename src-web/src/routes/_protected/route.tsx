@@ -99,13 +99,6 @@ function ProtectedComponent() {
     <>
       <Toaster
         richColors
-        toastOptions={{
-          style: {
-            zIndex: 9999,
-            backdropFilter: "none",
-            WebkitBackdropFilter: "none",
-          },
-        }}
       />
       <Authenticated>
         <div className="flex flex-col h-screen bg-base-100 mx-auto max-w-[100rem]">
