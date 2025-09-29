@@ -50,19 +50,6 @@ function CollectionComponent() {
             Manage and practice your created pronunciation collections.
           </p>
         </div>
-        <button
-          className="btn btn-primary"
-          type="button"
-          onClick={() => {
-            const modal = document.getElementById(
-              "chapter_create_modal",
-            ) as HTMLDialogElement;
-            if (modal) modal.showModal();
-          }}
-        >
-          <PlusCircleIcon size={18} weight="bold" className="mr-1" />
-          Create Chapter
-        </button>
       </div>
 
       {myChapters.length === 0
@@ -79,7 +66,8 @@ function CollectionComponent() {
               your practice materials.
             </p>
             <button
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700"
+              className="btn btn-primary"
+              type="button"
               onClick={() => {
                 const modal = document.getElementById(
                   "chapter_create_modal",
@@ -87,8 +75,8 @@ function CollectionComponent() {
                 if (modal) modal.showModal();
               }}
             >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Create Collection
+              <PlusCircleIcon size={18} weight="bold" className="mr-1" />
+              Create Chapter
             </button>
           </div>
         )

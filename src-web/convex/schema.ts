@@ -82,7 +82,7 @@ const socialSchema = {
     .index("by_chapter", ["chapterId"])
     .index("unique_like", ["userId", "chapterId"]),
 
-  chapter_save: defineTable({
+  chapter_bookmark: defineTable({
     userId: v.id("users"),
     chapterId: v.id("chapter"),
     created_at: v.number(),
@@ -106,4 +106,5 @@ export default defineSchema({
   ...userSchema,
   ...chapterSchema,
   ...feedbackSchema,
+  ...socialSchema,
 });

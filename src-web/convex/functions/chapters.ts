@@ -73,6 +73,14 @@ export const getChapters = query({
       .order("asc")
       .collect();
 
+    const user = await ctx.db
+      .query("users")
+      .withIndex(
+        "by_token",
+        (q) => q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
     const userIds = [...new Set(chapters.map((chapter) => chapter.created_by))];
 
     const users = await Promise.all(userIds.map((id) => ctx.db.get(id)));
@@ -113,18 +121,99 @@ export const getChapters = query({
         cat?.type === "difficulty"
       ).map((cat) => cat?.name)[0] || "N/A";
 
-      // console.log(categories);
+      if (user?._id) {
+        // Fetch all chapter_like records for the current user
+        const userLikes = await ctx.db
+          .query("chapter_like")
+          .withIndex("by_user", (q) =>
+            q.eq("userId", user._id))
+          .collect();
+        // Create a Set for quick O(1) lookup of liked chapter IDs
+        const likedChapterIds = new Set(
+          userLikes.map((like) => like.chapterId),
+        );
 
-      return {
-        ...chapter,
-        creator_name: userMap.get(chapter.created_by.toString())[0] ||
-          "Unknown User",
-        creator_picture_url: userMap.get(chapter.created_by.toString())[1] ||
-          undefined,
-        imageUrl,
-        difficulty,
-      };
+        // Fetch all chapter_save records for the current user
+        const userSaves = await ctx.db
+          .query("chapter_bookmark")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .collect();
+        // Create a Set for quick O(1) lookup of saved chapter IDs
+        const savedChapterIds = new Set(
+          userSaves.map((save) => save.chapterId),
+        );
+
+        // 4. Augment each chapter with its user-specific status
+        const chaptersWithStatus = {
+          ...chapter,
+          isLiked: likedChapterIds.has(chapter._id),
+          isBookmarked: savedChapterIds.has(chapter._id),
+          creator_name: userMap.get(chapter.created_by.toString())[0] ||
+            "Unknown User",
+          creator_picture_url: userMap.get(chapter.created_by.toString())[1] ||
+            undefined,
+          imageUrl,
+          difficulty,
+          categories: categories.filter((cat) => cat?.type !== "difficulty"),
+        };
+
+        return chaptersWithStatus;
+      } else {
+        // If the user is not authenticated, return chapters with false for status
+        // This ensures the client always receives a consistent shape.
+        return {
+          ...chapter,
+          isLiked: false,
+          isBookmarked: false,
+          creator_name: userMap.get(chapter.created_by.toString())[0] ||
+            "Unknown User",
+          creator_picture_url: userMap.get(chapter.created_by.toString())[1] ||
+            undefined,
+          imageUrl,
+          difficulty,
+          categories: categories.filter((cat) => cat?.type !== "difficulty"),
+        };
+      }
     }));
+  },
+});
+
+export const revokeChapter = mutation({
+  args: { chapterId: v.id("chapter") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Called revokeChapter without authentication present");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex(
+        "by_token",
+        (q) => q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found in database");
+    }
+
+    const chapter = await ctx.db.get(args.chapterId);
+
+    if (!chapter) {
+      throw new Error("Chapter not found");
+    }
+
+    if (chapter.created_by.toString() !== user._id.toString()) {
+      throw new Error("You do not have permission to revoke this chapter");
+    }
+
+    await ctx.db.patch(args.chapterId, {
+      revoked_at: Date.now(),
+      updated_at: Date.now(),
+    });
+
+    return { success: true, message: "Chapter revoked successfully." };
   },
 });
 
