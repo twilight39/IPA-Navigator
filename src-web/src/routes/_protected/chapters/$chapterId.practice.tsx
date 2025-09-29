@@ -16,6 +16,7 @@ import { api } from "../../../../convex/_generated/api.js";
 import { useNavigate } from "@tanstack/react-router";
 import { useTTS } from "../../../hooks/useTTS.tsx";
 import { usePronunciationAnalysis } from "../../../hooks/usePronunciationAnalysis.tsx";
+import { WordPracticeModal } from "../../../components/ChapterComponents/WordPracticeModal.tsx";
 
 export const Route = createFileRoute(
   "/_protected/chapters/$chapterId/practice",
@@ -320,6 +321,7 @@ const PhonemeModal = ({
 }) => {
   const [selectedWordIndex, setSelectedWordIndex] = useState(0);
   const [selectedPhonemeIndex, setSelectedPhonemeIndex] = useState(0);
+  const [showWordPractice, setShowWordPractice] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -622,7 +624,10 @@ const PhonemeModal = ({
                   <SpeakerHighIcon size={16} className="mr-2" />
                   Reference
                 </button>
-                <button className="btn btn-success btn-sm">
+                <button
+                  className="btn btn-success btn-sm"
+                  onClick={() => setShowWordPractice(true)}
+                >
                   Practice Word
                 </button>
               </div>
@@ -745,6 +750,13 @@ const PhonemeModal = ({
           <button>close</button>
         </form>
       </dialog>
+      {showWordPractice && (
+        <WordPracticeModal
+          isOpen={showWordPractice}
+          onClose={() => setShowWordPractice(false)}
+          wordResult={currentWord}
+        />
+      )}
     </>
   );
 };

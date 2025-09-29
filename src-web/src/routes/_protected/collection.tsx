@@ -16,10 +16,23 @@ export const Route = createFileRoute("/_protected/collection")({
 
 function CollectionComponent() {
   const navigate = useNavigate();
-  const { userId } = useStoreUserEffect();
+  const { userId, isLoading } = useStoreUserEffect();
 
-  const allChapters: Chapter[] =
-    useQuery(api.functions.chapters.getChapters, {}) || [];
+  const allChapters: Chapter[] | undefined = useQuery(
+    api.functions.chapters.getChapters,
+    {},
+  );
+
+  const isLoadingChapters = allChapters === undefined;
+
+  if (isLoadingChapters || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="loading loading-spinner loading-lg text-primary"></div>
+      </div>
+    );
+  }
+
   const myChapters = allChapters.filter(
     (chapter) => chapter.created_by === userId,
   );

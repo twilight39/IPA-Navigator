@@ -76,14 +76,16 @@ export const Form: React.FC<FormProps> = (
       </div>
 
       <div className="flex justify-end gap-2 px-6 py-2">
-        <form method="dialog">
-          <button
-            type="submit"
-            className="btn btn-soft btn-ghost"
-          >
-            Cancel
-          </button>
-        </form>
+        <button
+          type="button"
+          className="btn btn-soft btn-ghost"
+          onClick={() => {
+            const modal = document.getElementById(modalID) as HTMLDialogElement;
+            if (modal) modal.close();
+          }}
+        >
+          Cancel
+        </button>
         <button
           type="submit"
           className={`btn btn-primary ${isLoading ? "btn-disabled" : ""}`}

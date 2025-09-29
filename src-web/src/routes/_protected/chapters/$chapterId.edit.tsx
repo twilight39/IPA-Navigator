@@ -9,6 +9,7 @@ import { ArrowLeftIcon, EyeIcon } from "@phosphor-icons/react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api.js";
 import { EditorContent } from "../../../components/ChapterComponents/EditorContent.tsx";
+import { SettingsContent } from "../../../components/ChapterComponents/SettingsContent.tsx";
 
 export const Route = createFileRoute("/_protected/chapters/$chapterId/edit")({
   component: ChapterEditorComponent,
@@ -125,7 +126,12 @@ function ChapterEditorComponent() {
               chapterId={chapterId}
             />
           )
-          : <></>}
+          : (
+            <SettingsContent
+              chapterId={chapterId}
+              onSaveStatusChange={setAutoSaveStatus}
+            />
+          )}
       </div>
     </div>
   );

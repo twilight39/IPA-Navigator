@@ -17,6 +17,7 @@ import type * as functions_chapters from "../functions/chapters.js";
 import type * as functions_excerpts from "../functions/excerpts.js";
 import type * as functions_files from "../functions/files.js";
 import type * as functions_users from "../functions/users.js";
+import type * as models_chapters from "../models/chapters.js";
 import type * as models_users from "../models/users.js";
 
 /**
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   "functions/excerpts": typeof functions_excerpts;
   "functions/files": typeof functions_files;
   "functions/users": typeof functions_users;
+  "models/chapters": typeof models_chapters;
   "models/users": typeof models_users;
 }>;
 export declare const api: FilterApi<

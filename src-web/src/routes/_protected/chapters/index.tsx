@@ -34,6 +34,8 @@ function ChaptersComponent() {
   const chapters: Chapter[] =
     useQuery(api.functions.chapters.getChapters, {}) || [];
 
+  console.log(chapters);
+
   return (
     <div className="space-y-4 p-4 mx-auto">
       <div className="flex items-center justify-between pb-2">
@@ -218,14 +220,14 @@ function ChapterCard({ chapter }: { chapter: Chapter }) {
   const formattedDate = new Date(chapter.created_at).toLocaleDateString();
 
   return (
-    <div className="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-slate-200">
+    <div className="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200 border border-slate-200 rounded-lg">
       <div className="relative h-36 overflow-hidden">
         {chapter.imageUrl
           ? (
             <img
               src={chapter.imageUrl}
               alt={chapter.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-t-lg"
             />
           )
           : (
