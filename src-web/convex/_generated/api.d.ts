@@ -16,6 +16,7 @@ import type {
 import type * as functions_chapters from "../functions/chapters.js";
 import type * as functions_excerpts from "../functions/excerpts.js";
 import type * as functions_files from "../functions/files.js";
+import type * as functions_phonemes from "../functions/phonemes.js";
 import type * as functions_social from "../functions/social.js";
 import type * as functions_users from "../functions/users.js";
 import type * as models_chapters from "../models/chapters.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   "functions/chapters": typeof functions_chapters;
   "functions/excerpts": typeof functions_excerpts;
   "functions/files": typeof functions_files;
+  "functions/phonemes": typeof functions_phonemes;
   "functions/social": typeof functions_social;
   "functions/users": typeof functions_users;
   "models/chapters": typeof models_chapters;

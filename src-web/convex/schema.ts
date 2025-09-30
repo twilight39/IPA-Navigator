@@ -50,6 +50,93 @@ const chapterSchema = {
     .index("by_category", ["categoryId"]), // Get all chapters for a given category
 };
 
+const performanceSchema = {
+  practice_session: defineTable({
+    userId: v.id("users"),
+    chapterId: v.id("chapter"),
+    overall_accuracy: v.number(),
+    overall_confidence: v.number(),
+    total_words: v.number(),
+    duration_seconds: v.optional(v.number()),
+    created_at: v.number(),
+  })
+    .index("by_user", ["userId", "created_at"])
+    .index("by_chapter", ["chapterId", "created_at"])
+    .index("by_user_chapter", ["userId", "chapterId", "created_at"]),
+  user_chapter_progress: defineTable({
+    userId: v.id("users"),
+    chapterId: v.id("chapter"),
+    is_completed: v.boolean(),
+    last_practice_session_id: v.optional(v.id("practice_session")),
+    last_practiced_at: v.number(),
+    total_practice_sessions: v.number(),
+    cumulative_overall_accuracy: v.number(),
+    total_words_practiced: v.number(),
+  })
+    .index("by_user_chapter", ["userId", "chapterId"])
+    .index("by_user_completed", ["userId", "is_completed"])
+    .index("by_user_last_practiced", ["userId", "last_practiced_at"]),
+  word_result: defineTable({
+    sessionId: v.id("practice_session"),
+    word: v.string(),
+    expected_index: v.number(),
+    transcribed_as: v.optional(v.string()),
+    word_accuracy: v.number(),
+    word_confidence: v.number(),
+    time_start: v.optional(v.number()),
+    time_end: v.optional(v.number()),
+  }).index("by_session", ["sessionId", "expected_index"]),
+  phoneme_result: defineTable({
+    wordResultId: v.id("word_result"),
+    position: v.number(), // Position of the phoneme within the word
+    target_phoneme: v.string(), // The IPA symbol expected, e.g., "l", "ð", "ɪ"
+    detected_phoneme: v.optional(v.string()),
+    accuracy: v.number(),
+    confidence: v.optional(v.number()),
+    similarity_score: v.optional(v.number()),
+    status: v.union(
+      v.literal("correct"),
+      v.literal("substitution"),
+      v.literal("deletion"),
+      v.literal("insertion"),
+    ),
+    time_start: v.optional(v.number()),
+    time_end: v.optional(v.number()),
+  })
+    .index("by_word_result", ["wordResultId", "position"])
+    .index("by_target_phoneme", ["target_phoneme"]),
+  user_phoneme_stats: defineTable({
+    userId: v.id("users"),
+    phoneme: v.string(),
+    total_attempts: v.number(),
+    total_correct: v.number(),
+    avg_accuracy: v.number(),
+    avg_confidence: v.number(),
+    last_practiced: v.number(),
+    updated_at: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_phoneme", ["userId", "phoneme"]),
+  user_daily_stats: defineTable({
+    userId: v.id("users"),
+    date: v.string(),
+    sessions_count: v.number(),
+    total_words: v.number(),
+    avg_accuracy: v.number(),
+    practice_time_seconds: v.number(),
+  }).index("by_user_date", ["userId", "date"]),
+  user_daily_phoneme_stats: defineTable({
+    userId: v.id("users"),
+    date: v.string(),
+    phoneme: v.string(),
+    total_attempts_daily: v.number(),
+    total_correct_daily: v.number(),
+    avg_accuracy_daily: v.number(),
+  })
+    .index("by_user_date_phoneme", ["userId", "date", "phoneme"])
+    .index("by_user_phoneme_date", ["userId", "phoneme", "date"]),
+};
+
 const feedbackSchema = {
   phoneme_feedback: defineTable({
     phoneme: v.string(), // The IPA symbol, e.g., "l", "ð", "ɪ"
@@ -105,6 +192,7 @@ const socialSchema = {
 export default defineSchema({
   ...userSchema,
   ...chapterSchema,
+  ...performanceSchema,
   ...feedbackSchema,
   ...socialSchema,
 });
