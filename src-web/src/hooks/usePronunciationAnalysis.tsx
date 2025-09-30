@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import RecordRTC from "recordrtc";
 
-interface PhonemeResult {
+export interface PhonemeResult {
   position: number | null;
   target: string | null;
   detected: string | null;
@@ -16,28 +16,14 @@ interface PhonemeResult {
   similarity_score: number | null;
 }
 
-interface PhonemeAnalysis {
+export interface PhonemeAnalysis {
   target_phonemes: string[];
   detected_phonemes: string[];
   phoneme_results: PhonemeResult[];
   word_accuracy: number;
 }
 
-interface AnalysisResult {
-  overall_accuracy: number;
-  overall_confidence: number;
-  total_words: number;
-  word_results: WordResult[];
-}
-
-type Dialect = "us" | "uk";
-
-interface UsePronunciationAnalysisOptions {
-  serverUrl?: string;
-  defaultDialect?: Dialect;
-}
-
-interface WordResult {
+export interface WordResult {
   word: string;
   expected_index: number;
   transcribed_as: string | null;
@@ -50,11 +36,18 @@ interface WordResult {
   phoneme_analysis: PhonemeAnalysis;
 }
 
-interface AnalysisResult {
+export interface AnalysisResult {
   overall_accuracy: number;
   overall_confidence: number;
   total_words: number;
   word_results: WordResult[];
+}
+
+type Dialect = "us" | "uk";
+
+interface UsePronunciationAnalysisOptions {
+  serverUrl?: string;
+  defaultDialect?: Dialect;
 }
 
 interface UsePronunciationAnalysisOptions {
@@ -120,7 +113,7 @@ export function usePronunciationAnalysis(
     if (recorder && isRecording) {
       recorder.stopRecording(() => {
         const blob = recorder.getBlob();
-        console.log("RecordRTC blob:", blob.size, "bytes, type:", blob.type);
+        // console.log("RecordRTC blob:", blob.size, "bytes, type:", blob.type);
 
         setAudioBlob(blob);
         setAudioURL(URL.createObjectURL(blob));
@@ -158,7 +151,7 @@ export function usePronunciationAnalysis(
     });
   };
 
-  const analyzeAudio = async (
+  const analyzeAudio = (
     transcript: string,
     dialect: Dialect = defaultDialect,
   ) => {
@@ -174,7 +167,7 @@ export function usePronunciationAnalysis(
     const analyzeAudioPromise = async () => {
       try {
         const base64Audio = await blobToBase64(audioBlob);
-        console.log("Base64 audio length:", base64Audio.length);
+        // console.log("Base64 audio length:", base64Audio.length);
 
         const response = await fetch(serverUrl, {
           method: "POST",

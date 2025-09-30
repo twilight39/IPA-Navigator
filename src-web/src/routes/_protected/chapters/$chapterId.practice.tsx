@@ -17,6 +17,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useTTS } from "../../../hooks/useTTS.tsx";
 import { usePronunciationAnalysis } from "../../../hooks/usePronunciationAnalysis.tsx";
 import { WordPracticeModal } from "../../../components/ChapterComponents/WordPracticeModal.tsx";
+import { usePhonemeFeedbacks } from "../../../hooks/usePhonemeFeedbacks.tsx";
 
 export const Route = createFileRoute(
   "/_protected/chapters/$chapterId/practice",
@@ -78,7 +79,7 @@ function ChapterPracticeComponent() {
   // Handle analysis
   const handleAnalyze = async () => {
     if (hasRecording && excerpts) {
-      const result = await analyzeAudio(excerpts[currentExcerptIndex].text);
+      const result = analyzeAudio(excerpts[currentExcerptIndex].text);
       if (result) {
         setShowFeedback(true);
       }
@@ -322,6 +323,8 @@ const PhonemeModal = ({
   const [selectedWordIndex, setSelectedWordIndex] = useState(0);
   const [selectedPhonemeIndex, setSelectedPhonemeIndex] = useState(0);
   const [showWordPractice, setShowWordPractice] = useState(false);
+  const { stopAudio, playText, isLoading: ttsLoading, isPlaying } = useTTS();
+  const { feedbackMap } = usePhonemeFeedbacks();
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -620,9 +623,41 @@ const PhonemeModal = ({
                     Replay Word
                   </button>
                 )}
-                <button className="btn btn-outline btn-sm">
-                  <SpeakerHighIcon size={16} className="mr-2" />
-                  Reference
+                <button
+                  className={`btn btn-outline btn-sm ${
+                    isPlaying ? "btn-error" : "btn-primary"
+                  }`}
+                  type="button"
+                  onClick={() => {
+                    if (isPlaying) {
+                      stopAudio();
+                    } else {
+                      playText(currentWord.word);
+                    }
+                  }}
+                  disabled={ttsLoading}
+                >
+                  {ttsLoading
+                    ? (
+                      <>
+                        <span className="loading loading-spinner loading-sm mr-2">
+                        </span>
+                        Loading...
+                      </>
+                    )
+                    : isPlaying
+                    ? (
+                      <>
+                        <XIcon size={16} className="mr-2" />
+                        Stop Reference
+                      </>
+                    )
+                    : (
+                      <>
+                        <SpeakerHighIcon size={16} className="mr-2" />
+                        Reference
+                      </>
+                    )}
                 </button>
                 <button
                   className="btn btn-success btn-sm"
@@ -723,15 +758,10 @@ const PhonemeModal = ({
                     <div className="bg-base-200 p-3 rounded">
                       <h4 className="font-medium mb-2">Improvement Tips:</h4>
                       <ul className="text-sm space-y-1">
-                        <li>
-                          • Listen carefully to the reference pronunciation
-                        </li>
-                        <li>
-                          • Practice the sound in isolation before using it in
-                          words
-                        </li>
-                        <li>• Record yourself and compare with the target</li>
-                        <li>• Pay attention to tongue and lip position</li>
+                        {(feedbackMap.get(currentPhoneme.target)?.description ??
+                          [
+                            "No specific tips found for this phoneme. Try listening to the reference and focusing on tongue/lip position.",
+                          ]).map((tip, i) => <li key={i}>• {tip}</li>)}
                       </ul>
                     </div>
                   )}
