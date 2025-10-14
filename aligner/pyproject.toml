@@ -1,0 +1,37 @@
+[project]
+name = "ipa-navigator-aligner"
+version = "0.1.0"
+requires-python = "==3.12.*"
+dependencies = [
+    "fastapi[standard]>=0.119.0",
+    "levenshtein>=0.27.1",
+    "panphon>=0.22.2",
+    "phonemizer>=3.3.0",
+    "pydantic>=2.12.0",
+    "scipy>=1.16.2",
+    "torch>=2.8.0",
+    "torchaudio>=2.8.0",
+    "transformers==4.42.2",
+    "whisperx",
+]
+
+[tool.ruff]
+target-version = "py312"
+include = ["aligner/app"]
+
+[tool.basedpyright]
+include = ["aligner/app/**.py"]
+reportMissingImports = "error"
+reportMissingTypeStubs = false
+reportUnusedCallResult = false
+pythonVersion = "3.12"
+typeCheckingMode = "recommended"
+allowedUntypedLibraries = ["soundfile"]
+venvPath = "aligner"
+venv=".venv"
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.31.7",
+    "ruff>=0.14.0",
+]

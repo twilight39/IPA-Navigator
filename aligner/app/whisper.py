@@ -19,7 +19,7 @@ BATCH_SIZE = 8
 
 # Load model
 transcribe_model = whisperx.load_model(
-    MODEL, DEVICE, compute_type=COMPUTE_TYPE, download_root=LOCAL_MODEL
+    MODEL, DEVICE, compute_type=COMPUTE_TYPE, download_root=LOCAL_MODEL, language="en"
 )
 align_model, metadata = whisperx.load_align_model(
     language_code="en", device=DEVICE, model_dir=LOCAL_MODEL

@@ -172,7 +172,7 @@ def extract_phonemes_by_timespan(
     end_time: float,
     overlap_threshold: float = 0.005,
     start_buffer_s: float = 0.10,
-    end_buffer_s: float = -0.05,
+    end_buffer_s: float = 0.05,
 ) -> list[Phoneme]:
     """Extract phonemes that overlap with the specified time span."""
     extracted_phonemes: list[Phoneme] = []

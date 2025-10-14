@@ -1,6 +1,6 @@
 from phonemizer import phonemize
 from typing import TypedDict, cast, Literal
-import panphon
+import panphon._panphon as panphon
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from functools import lru_cache
@@ -64,8 +64,19 @@ def calculate_phoneme_similarity(phoneme1: str, phoneme2: str) -> float:
             return calculate_phoneme_similarity_rule_based(phoneme1, phoneme2)
 
         # Convert feature dict to binary vector
-        vec1 = np.array(list(features1), dtype=np.float32).reshape(1, -1)
-        vec2 = np.array(list(features2), dtype=np.float32).reshape(1, -1)
+        def panphon_feature_to_float(val):
+            if isinstance(val, (int, float)):
+                return float(val)
+            if val == "+":
+                return 1.0
+            if val == "-":
+                return -1.0
+            if val == "0":
+                return 0.0
+            return 0.0  # fallback for other strings
+
+        vec1 = np.array(list([panphon_feature_to_float(feature) for feature in features1]), dtype=np.float32).reshape(1, -1)
+        vec2 = np.array(list([panphon_feature_to_float(feature) for feature in features2]), dtype=np.float32).reshape(1, -1)
 
         cos_sim = cosine_similarity(vec1, vec2)[0][0]
         similarity = (cos_sim + 1) / 2.0
