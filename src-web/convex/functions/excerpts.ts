@@ -11,7 +11,10 @@ export const getExcerptsForChapter = query({
 
     const chapterExcerpts = await ctx.db.query("chapter_excerpt")
       .withIndex("by_chapter")
-      .filter((q) => q.eq(q.field("chapterId"), args.chapterId))
+      .filter((q) =>
+        q.eq(q.field("chapterId"), args.chapterId) &&
+        q.eq(q.field("revoked_at"), undefined)
+      )
       .order("asc")
       .collect();
 
@@ -65,6 +68,7 @@ export const addExcerpt = mutation({
     const id = await ctx.db.insert("chapter_excerpt", {
       chapterId: args.chapterId,
       excerptId,
+      created_at: Date.now(),
       order,
     });
 
@@ -160,7 +164,10 @@ export const deleteExcerpt = mutation({
       throw new Error("Chapter excerpt not found");
     }
 
-    await ctx.db.delete(args.chapterExcerptId);
+    await ctx.db.patch(
+      args.chapterExcerptId,
+      { revoked_at: Date.now() },
+    );
 
     // Optionally, delete the excerpt if it's not used in any other chapter
     const otherReferences = await ctx.db.query("chapter_excerpt")

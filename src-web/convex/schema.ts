@@ -19,7 +19,12 @@ const chapterSchema = {
     created_by: v.id("users"),
     updated_at: v.number(),
     revoked_at: v.optional(v.number()),
-  }).index("by_name", ["revoked_at", "name"]),
+  }).index("by_name", ["revoked_at", "name"])
+    .index("by_created_by", [
+      "created_by",
+      "revoked_at",
+      "created_at",
+    ]),
   excerpt: defineTable({
     text: v.string(),
   }).index("by_text", ["text"]),
@@ -27,7 +32,9 @@ const chapterSchema = {
     chapterId: v.id("chapter"),
     excerptId: v.id("excerpt"),
     order: v.number(),
-  }).index("by_chapter", ["chapterId", "order"])
+    created_at: v.number(),
+    revoked_at: v.optional(v.number()),
+  }).index("by_chapter", ["chapterId", "revoked_at", "order"])
     .index("by_excerpt", ["excerptId"]),
   category: defineTable({
     name: v.string(),
@@ -40,7 +47,11 @@ const chapterSchema = {
     parentId: v.optional(v.id("category")),
     created_at: v.number(),
     updated_at: v.number(),
-  }).index("by_type", ["type", "sort_order"]),
+  }).index("by_type", ["type", "sort_order"]).index("by_type_and_parent", [
+    "type",
+    "parentId",
+    "sort_order",
+  ]),
   chapter_category: defineTable({
     chapterId: v.id("chapter"),
     categoryId: v.id("category"),
@@ -51,33 +62,21 @@ const chapterSchema = {
 };
 
 const performanceSchema = {
-  practice_session: defineTable({
+  excerpt_practice: defineTable({
     userId: v.id("users"),
-    chapterId: v.id("chapter"),
+    excerptId: v.id("excerpt"),
+    chapterId: v.id("chapter"), // Denormalized for queries
     overall_accuracy: v.number(),
     overall_confidence: v.number(),
     total_words: v.number(),
-    duration_seconds: v.optional(v.number()),
     created_at: v.number(),
   })
-    .index("by_user", ["userId", "created_at"])
-    .index("by_chapter", ["chapterId", "created_at"])
-    .index("by_user_chapter", ["userId", "chapterId", "created_at"]),
-  user_chapter_progress: defineTable({
-    userId: v.id("users"),
-    chapterId: v.id("chapter"),
-    is_completed: v.boolean(),
-    last_practice_session_id: v.optional(v.id("practice_session")),
-    last_practiced_at: v.number(),
-    total_practice_sessions: v.number(),
-    cumulative_overall_accuracy: v.number(),
-    total_words_practiced: v.number(),
-  })
-    .index("by_user_chapter", ["userId", "chapterId"])
-    .index("by_user_completed", ["userId", "is_completed"])
-    .index("by_user_last_practiced", ["userId", "last_practiced_at"]),
+    .index("by_user_excerpt", ["userId", "excerptId", "created_at"])
+    .index("by_user_chapter", ["userId", "chapterId", "created_at"])
+    .index("by_excerpt", ["excerptId", "created_at"]),
+
   word_result: defineTable({
-    sessionId: v.id("practice_session"),
+    practiceId: v.id("excerpt_practice"),
     word: v.string(),
     expected_index: v.number(),
     transcribed_as: v.optional(v.string()),
@@ -85,11 +84,12 @@ const performanceSchema = {
     word_confidence: v.number(),
     time_start: v.optional(v.number()),
     time_end: v.optional(v.number()),
-  }).index("by_session", ["sessionId", "expected_index"]),
+  }).index("by_practice", ["practiceId", "expected_index"]),
+
   phoneme_result: defineTable({
     wordResultId: v.id("word_result"),
-    position: v.number(), // Position of the phoneme within the word
-    target_phoneme: v.string(), // The IPA symbol expected, e.g., "l", "ð", "ɪ"
+    position: v.optional(v.number()), // Position of the phoneme within the word
+    target_phoneme: v.optional(v.string()), // The IPA symbol expected, e.g., "l", "ð", "ɪ"
     detected_phoneme: v.optional(v.string()),
     accuracy: v.number(),
     confidence: v.optional(v.number()),
@@ -105,36 +105,67 @@ const performanceSchema = {
   })
     .index("by_word_result", ["wordResultId", "position"])
     .index("by_target_phoneme", ["target_phoneme"]),
-  user_phoneme_stats: defineTable({
+
+  /* Aggregate Tables */
+  user_excerpt_progress: defineTable({
     userId: v.id("users"),
-    phoneme: v.string(),
+    /* chapter_excerpt has a revoked_at field */
+    excerptId: v.id("excerpt"),
+    chapterId: v.id("chapter"),
+    best_accuracy: v.number(),
+    best_practice_id: v.id("excerpt_practice"),
     total_attempts: v.number(),
-    total_correct: v.number(),
-    avg_accuracy: v.number(),
-    avg_confidence: v.number(),
-    last_practiced: v.number(),
+  })
+    .index("by_user_chapter", ["userId", "chapterId"])
+    .index("by_user_excerpt", ["userId", "excerptId"]),
+  user_chapter_progress: defineTable({
+    userId: v.id("users"),
+    /* chapter_excerpt has a revoked_at field */
+    chapterId: v.id("chapter"),
+    completed_excerpts_count: v.number(),
+    total_excerpts_in_chapter: v.number(),
+    overall_accuracy: v.number(),
+    completed: v.boolean(),
+    created_at: v.number(),
     updated_at: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_user_phoneme", ["userId", "phoneme"]),
-  user_daily_stats: defineTable({
+    revoked_at: v.optional(v.number()),
+  }).index("by_user", ["userId", "revoked_at"])
+    .index("by_user_chapter", ["userId", "chapterId", "revoked_at"])
+    .index(
+      "by_user_completed",
+      ["userId", "completed", "revoked_at"],
+    ),
+};
+
+const activitySchema = {
+  activity_log: defineTable({
     userId: v.id("users"),
-    date: v.string(),
-    sessions_count: v.number(),
-    total_words: v.number(),
-    avg_accuracy: v.number(),
-    practice_time_seconds: v.number(),
-  }).index("by_user_date", ["userId", "date"]),
-  user_daily_phoneme_stats: defineTable({
-    userId: v.id("users"),
-    date: v.string(),
-    phoneme: v.string(),
-    total_attempts_daily: v.number(),
-    total_correct_daily: v.number(),
-    avg_accuracy_daily: v.number(),
+    action_type: v.union(
+      v.literal("practice_completed"),
+      v.literal("chapter_created"),
+      v.literal("chapter_liked"),
+      v.literal("chapter_unliked"),
+      v.literal("chapter_bookmarked"),
+      v.literal("chapter_unbookmarked"),
+      v.literal("user_followed"),
+      v.literal("classroom_joined"),
+      v.literal("achievement_earned"),
+    ),
+    metadata: v.optional(
+      v.object({
+        excerptId: v.optional(v.id("excerpt")),
+        chapterId: v.optional(v.id("chapter")),
+        practiceId: v.optional(v.id("excerpt_practice")),
+        classroomId: v.optional(v.id("classroom")),
+        targetUserId: v.optional(v.id("users")),
+        accuracy: v.optional(v.number()),
+        // Add other relevant fields
+      }),
+    ),
+    created_at: v.number(),
   })
-    .index("by_user_date_phoneme", ["userId", "date", "phoneme"])
-    .index("by_user_phoneme_date", ["userId", "phoneme", "date"]),
+    .index("by_user", ["userId", "created_at"])
+    .index("by_type", ["action_type", "created_at"]),
 };
 
 const feedbackSchema = {
@@ -189,10 +220,81 @@ const socialSchema = {
     .index("by_chapter", ["chapterId"]),
 };
 
+const classroomSchema = {
+  classroom: defineTable({
+    name: v.string(),
+    description: v.optional(v.string()),
+    teacherId: v.id("users"),
+    created_at: v.number(),
+    updated_at: v.number(),
+    archived_at: v.optional(v.number()),
+  }).index("by_teacher", ["teacherId", "archived_at"]),
+
+  classroom_enrollment: defineTable({
+    classroomId: v.id("classroom"),
+    userId: v.id("users"),
+    role: v.union(v.literal("teacher"), v.literal("student")),
+    enrolled_at: v.number(),
+    removed_at: v.optional(v.number()),
+  })
+    .index("by_classroom", ["classroomId", "removed_at"])
+    .index("by_user", ["userId", "removed_at"])
+    .index("unique_enrollment", ["classroomId", "userId"]),
+
+  classroom_assignment: defineTable({
+    classroomId: v.id("classroom"),
+    chapterId: v.id("chapter"),
+    assignedBy: v.id("users"),
+    due_date: v.optional(v.number()),
+    assigned_at: v.number(),
+  })
+    .index("by_classroom", ["classroomId", "due_date"])
+    .index("by_chapter", ["chapterId"]),
+};
+
+const mlSchema = {
+  // Track excerpt effectiveness per phoneme
+  excerpt_phoneme_effectiveness: defineTable({
+    excerptId: v.id("excerpt"),
+    phoneme: v.string(),
+    total_practices: v.number(),
+    avg_improvement: v.number(), // Accuracy delta after practicing
+    users_improved: v.number(),
+    users_practiced: v.number(),
+    last_updated: v.number(),
+  })
+    .index("by_phoneme", ["phoneme", "avg_improvement"])
+    .index("by_excerpt", ["excerptId"]),
+
+  // Track user improvement after practicing specific excerpts
+  user_phoneme_improvement: defineTable({
+    userId: v.id("users"),
+    phoneme: v.string(),
+    excerptId: v.id("excerpt"),
+    accuracy_before: v.number(),
+    accuracy_after: v.number(),
+    improvement: v.number(), // after - before
+    practiced_at: v.number(),
+  })
+    .index("by_user_phoneme", ["userId", "phoneme", "practiced_at"])
+    .index("by_excerpt_phoneme", ["excerptId", "phoneme"]),
+
+  // Track when user last practiced each excerpt (for diversity)
+  user_excerpt_recency: defineTable({
+    userId: v.id("users"),
+    excerptId: v.id("excerpt"),
+    last_practiced_at: v.number(),
+  })
+    .index("by_user", ["userId", "last_practiced_at"])
+    .index("by_user_excerpt", ["userId", "excerptId"]),
+};
+
 export default defineSchema({
   ...userSchema,
   ...chapterSchema,
   ...performanceSchema,
+  ...activitySchema,
   ...feedbackSchema,
   ...socialSchema,
+  ...classroomSchema,
 });

@@ -42,6 +42,14 @@ export const toggleLike = mutation({
     if (existingLike) {
       // User has already liked this chapter, so we remove the like (unlike)
       await ctx.db.delete(existingLike._id);
+
+      await ctx.db.insert("activity_log", {
+        userId: user._id,
+        action_type: "chapter_unliked",
+        metadata: { chapterId: args.chapterId },
+        created_at: Date.now(),
+      });
+
       return { success: true, message: "Chapter unliked." };
     } else {
       // User has not liked this chapter yet, so we add a new like
@@ -50,6 +58,14 @@ export const toggleLike = mutation({
         chapterId: args.chapterId,
         created_at: Date.now(),
       });
+
+      await ctx.db.insert("activity_log", {
+        userId: user._id,
+        action_type: "chapter_liked",
+        metadata: { chapterId: args.chapterId },
+        created_at: Date.now(),
+      });
+
       return { success: true, message: "Chapter liked." };
     }
   },
