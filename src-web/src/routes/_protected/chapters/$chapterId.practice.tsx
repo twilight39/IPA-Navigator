@@ -11,7 +11,7 @@ import {
   SpeakerHighIcon,
   XIcon,
 } from "@phosphor-icons/react";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api.js";
 import { useNavigate } from "@tanstack/react-router";
 import { useTTS } from "../../../hooks/useTTS.tsx";
@@ -31,6 +31,10 @@ function ChapterPracticeComponent() {
   });
   const chapterId = params.chapterId;
   const navigate = useNavigate();
+
+  const saveResults = useMutation(
+    api.functions.performance.savePracticeResults,
+  );
 
   const { playText, stopAudio, isPlaying, isLoading: ttsLoading } = useTTS();
   const {
@@ -76,12 +80,39 @@ function ChapterPracticeComponent() {
     }
   };
 
+  function cleanNulls(obj: any): any {
+    if (Array.isArray(obj)) {
+      return obj.map(cleanNulls);
+    } else if (obj && typeof obj === "object") {
+      const cleaned: any = {};
+      for (const key of Object.keys(obj)) {
+        const value = obj[key];
+        cleaned[key] = value === null ? undefined : cleanNulls(value);
+      }
+      return cleaned;
+    }
+    return obj;
+  }
+
   // Handle analysis
   const handleAnalyze = async () => {
     if (hasRecording && excerpts) {
       const result = analyzeAudio(excerpts[currentExcerptIndex].text);
-      if (result) {
+
+      let analysis = null;
+      if (result && typeof result.unwrap === "function") {
         setShowFeedback(true);
+        analysis = await result.unwrap();
+      }
+      console.log(excerpts);
+
+      if (analysis) {
+        setShowFeedback(true);
+        await saveResults({
+          excerptId: excerpts[currentExcerptIndex].excerptId,
+          chapterId: chapterId,
+          results: cleanNulls(analysis),
+        });
       }
     }
   };
