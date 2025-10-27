@@ -73,7 +73,8 @@ const performanceSchema = {
   })
     .index("by_user_excerpt", ["userId", "excerptId", "created_at"])
     .index("by_user_chapter", ["userId", "chapterId", "created_at"])
-    .index("by_excerpt", ["excerptId", "created_at"]),
+    .index("by_excerpt", ["excerptId", "created_at"])
+    .index("by_user_and_time", ["userId", "created_at"]),
 
   word_result: defineTable({
     practiceId: v.id("excerpt_practice"),

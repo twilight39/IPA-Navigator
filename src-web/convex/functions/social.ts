@@ -112,12 +112,26 @@ export const toggleBookmark = mutation({
     if (existingBookmark) {
       // User has already bookmarked this chapter, so we remove the bookmark (unbookmark)
       await ctx.db.delete(existingBookmark._id);
+
+      await ctx.db.insert("activity_log", {
+        userId: user._id,
+        action_type: "chapter_unbookmarked",
+        metadata: { chapterId: args.chapterId },
+        created_at: Date.now(),
+      });
+
       return { success: true, message: "Chapter unbookmarked." };
     } else {
       // User has not bookmarked this chapter yet, so we add a new bookmark
       await ctx.db.insert("chapter_bookmark", {
         userId: user._id,
         chapterId: args.chapterId,
+        created_at: Date.now(),
+      });
+      await ctx.db.insert("activity_log", {
+        userId: user._id,
+        action_type: "chapter_bookmarked",
+        metadata: { chapterId: args.chapterId },
         created_at: Date.now(),
       });
       return { success: true, message: "Chapter bookmarked." };

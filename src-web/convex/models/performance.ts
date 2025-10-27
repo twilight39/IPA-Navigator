@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "../_generated/server.js";
 import { getUserIdFromContext } from "./users.ts";
+import type { Doc, Id } from "../_generated/dataModel.d.ts";
+import type { QueryCtx } from "../_generated/server.d.ts";
 
 export const updateUserChapterProgress = mutation({
   args: {
@@ -74,3 +76,45 @@ export const updateUserChapterProgress = mutation({
     }
   },
 });
+
+export async function getUserBestAccuracyFromTopAttempts(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+  maxAttempts: number = 3,
+): Promise<number> {
+  const practices = await ctx.db
+    .query("excerpt_practice")
+    .withIndex("by_user_excerpt", (q) => q.eq("userId", userId))
+    .collect();
+
+  // Group practices by excerpt
+  const excerptMap = new Map<Id<"excerpt">, Doc<"excerpt_practice">[]>();
+  for (const practice of practices) {
+    if (!excerptMap.has(practice.excerptId)) {
+      excerptMap.set(practice.excerptId, []);
+    }
+    excerptMap.get(practice.excerptId)!.push(practice);
+  }
+
+  // Get best accuracy from top maxAttempts for each excerpt
+  const excerptBestAccuracies: number[] = [];
+
+  for (const attempts of excerptMap.values()) {
+    // Sort by creation time (oldest first)
+    attempts.sort((a, b) => a.created_at - b.created_at);
+
+    // Take only first maxAttempts
+    const topAttempts = attempts.slice(0, maxAttempts);
+
+    // Get the best accuracy from these attempts
+    const bestAccuracy = Math.max(
+      ...topAttempts.map((a) => a.overall_accuracy),
+    );
+    excerptBestAccuracies.push(bestAccuracy);
+  }
+
+  return excerptBestAccuracies.length > 0
+    ? excerptBestAccuracies.reduce((a, b) => a + b, 0) /
+      excerptBestAccuracies.length
+    : 0;
+}

@@ -59,7 +59,7 @@ export function usePronunciationAnalysis(
   options: UsePronunciationAnalysisOptions = {},
 ) {
   const {
-    serverUrl = "http://0.0.0.0:8000/align",
+    serverUrl = "http://127.0.0.1:8000/align",
     defaultDialect = "uk",
   } = options;
 

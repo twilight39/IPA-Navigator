@@ -13,6 +13,28 @@ import { UserProfile } from "@clerk/clerk-react";
 // @ts-types="react"
 import { useState } from "react";
 
+import {
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+);
+
 export const Route = createFileRoute("/_protected/dashboard")({
   component: DashboardComponent,
 });
@@ -21,6 +43,11 @@ function DashboardComponent() {
   const [showEditProfile, setShowEditProfile] = useState(false);
 
   const user = useUser().user;
+
+  const userAccuracyData = useQuery(
+    api.functions.dashboard.getUserAccuracyOverTime,
+    {},
+  );
   const userActivityLog = useQuery(
     api.functions.dashboard.getUserActivitiyLog,
     {},
@@ -33,9 +60,23 @@ function DashboardComponent() {
     api.functions.dashboard.getUserProgressMeterData,
     {},
   );
+  const userPercentileData = useQuery(
+    api.functions.dashboard.getUserPercentileAndDistribution,
+    {},
+  );
   const userSkills: UserSkills = useQuery(
     api.functions.dashboard.getUserSkills,
   );
+
+  const userAccuracyOverTime = userAccuracyData?.chartData || [];
+  const totalWordsPracticed = userAccuracyData?.totalWords || 0;
+
+  // Calculate overall accuracy
+  const overallAccuracy = userAccuracyOverTime.length > 0
+    ? userAccuracyOverTime[userAccuracyOverTime.length - 1].accuracy.toFixed(2)
+    : 0;
+
+  console.log(userPercentileData);
 
   if (
     user === null || user === undefined || userCommunityStats === undefined ||
@@ -57,6 +98,26 @@ function DashboardComponent() {
   const radius = 45;
   const circumference = 2 * Math.PI * radius;
   const strokeWidth = 4;
+
+  const lineChartData = {
+    labels: userAccuracyOverTime.map((d) => d.label),
+    datasets: [
+      {
+        label: "Accuracy",
+        data: userAccuracyOverTime.map((d) => d.accuracy),
+        fill: false,
+        backgroundColor: "rgb(5, 211, 189)", // Main line color (Teal)
+        borderColor: "rgba(5, 211, 189, 0.6)",
+        tension: 0.4, // Makes the line smooth
+        pointRadius: 3,
+        pointBackgroundColor: "rgb(5, 211, 189)",
+        pointBorderColor: "#fff",
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: "rgb(5, 211, 189)",
+        pointHoverBorderColor: "rgba(220,220,220,1)",
+      },
+    ],
+  };
 
   return (
     <div className="p-4 flex flex-row gap-4">
@@ -279,28 +340,37 @@ function DashboardComponent() {
                     <p className="text-sm text-gray-500 flex-grow-0">
                       Accuracy
                     </p>
-                    <p className="text-2xl">78.3%</p>
+                    <p className="text-2xl">{overallAccuracy}%</p>
                   </div>
                   <div className="flex flex-col py-1">
                     <p className="text-sm text-gray-500 flex-grow-0">Ranking</p>
                     <div className="flex flex-row">
-                      <p className="text-sm mr-0 flex-grow-0">1</p>
-                      <p className="text-sm text-gray-400 ml-0">/500</p>
+                      <p className="text-sm mr-0 flex-grow-0">
+                        {userPercentileData?.userRank}
+                      </p>
+                      <p className="text-sm text-gray-400 ml-0">
+                        /{userPercentileData?.totalUsers}
+                      </p>
                     </div>
                   </div>
                   <div className="flex flex-col py-1">
                     <p className="text-sm text-gray-500 flex-grow-0">
                       Practiced
                     </p>
-                    <p className="text-sm">20,345</p>
+                    <p className="text-sm">
+                      {totalWordsPracticed.toLocaleString()}
+                    </p>
                   </div>
                 </div>
               </div>
-              <div className="px-2">
-                Line Chart goes here. Bottom left should be Jan current_year or
-                the month the user registered. Bottom right should be
-                current_month current_year. Then a line chart showing the
-                accuracy over time, in 2 week data point intervals.
+              <div className="px-2 mt-4 h-48">
+                {userAccuracyOverTime.length > 0
+                  ? <Line data={lineChartData} options={lineChartOptions} />
+                  : (
+                    <div className="flex h-full items-center justify-center text-gray-500 italic">
+                      No accuracy data available yet.
+                    </div>
+                  )}
               </div>
             </div>
 
@@ -312,12 +382,29 @@ function DashboardComponent() {
             <div className="flex-1 flex flex-col">
               <div className="flex flex-col py-1">
                 <p className="text-sm text-gray-500 flex-grow-0">Top</p>
-                <p className="text-2xl">20%</p>
+                <p className="text-2xl">
+                  {userPercentileData?.userPercentile}%
+                </p>
               </div>
-              <div>
-                Histogram goes here. Should have 20 bins, 5% accuracy per bin.
-                User's bin will be highlighted and the rest greyed out. Height
-                of each bin based on the number of users in that bin.
+              <div className="flex flex-col gap-2 flex-1">
+                <div className="flex items-end gap-1 h-32 flex-1">
+                  {userPercentileData?.histogram.map((bucket) => (
+                    <div
+                      key={bucket.range}
+                      className={`flex-1 rounded-sm transition-all ${
+                        bucket.isUserBucket ? "bg-warning" : "bg-gray-300"
+                      }`}
+                      style={{
+                        height: `${Math.max(bucket.heightPercent, 5)}%`,
+                      }}
+                      title={`${bucket.range}: ${bucket.count} users`}
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>0%</span>
+                  <span>100%</span>
+                </div>
               </div>
             </div>
           </div>
@@ -760,3 +847,72 @@ interface MeterData {
     };
   };
 }
+
+interface ChartDataItem {
+  label: string;
+  accuracy: number;
+}
+
+const lineChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false, // Allows chart to fill parent div height
+  plugins: {
+    legend: {
+      display: false, // No legend for a single line chart
+    },
+    title: {
+      display: false, // No main chart title
+    },
+    tooltip: {
+      callbacks: {
+        label: function (context: any) {
+          let label = context.dataset.label || "";
+          if (label) {
+            label += ": ";
+          }
+          if (context.parsed.y !== null) {
+            label += context.parsed.y + "%";
+          }
+          return label;
+        },
+      },
+    },
+  },
+  scales: {
+    x: {
+      grid: {
+        display: false, // No vertical grid lines
+      },
+      ticks: {
+        autoSkip: true, // Automatically skip labels if too many
+        maxTicksLimit: 7, // Limit number of visible X-axis labels
+        font: {
+          size: 10,
+        },
+        color: "#a0a0a0", // Grey tick labels
+      },
+      title: {
+        display: false, // No X-axis title
+      },
+    },
+    y: {
+      min: 0,
+      max: 100,
+      grid: {
+        color: "rgba(200, 200, 200, 0.2)", // Light grey horizontal grid lines
+      },
+      ticks: {
+        callback: function (value: any) {
+          return value + "%"; // Add '%' suffix to Y-axis labels
+        },
+        font: {
+          size: 10,
+        },
+        color: "#a0a0a0", // Grey tick labels
+      },
+      title: {
+        display: false, // No Y-axis title
+      },
+    },
+  },
+};

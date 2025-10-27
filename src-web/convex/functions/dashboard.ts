@@ -3,6 +3,143 @@ import { mutation, query } from "../_generated/server.js";
 import { getUserIdFromContext } from "../models/users.ts";
 import type { Doc, Id } from "../_generated/dataModel.d.ts";
 import type { QueryCtx } from "../_generated/server.d.ts";
+import { getUserBestAccuracyFromTopAttempts } from "../models/performance.ts";
+
+export const getUserAccuracyOverTime = query({
+  args: {
+    userId: v.optional(v.id("users")),
+  },
+  handler: async (ctx, args) => {
+    const userId = args.userId || (await getUserIdFromContext(ctx));
+
+    const userCreatedAt = await ctx.db.get(userId);
+
+    if (!userCreatedAt) {
+      throw new Error("User not found");
+    }
+
+    const currentYear = new Date().getFullYear();
+
+    let startDate;
+    const userCreatedDate = new Date(userCreatedAt._creationTime);
+    // If user registered in a previous year, start from Jan 1st of the current year
+    if (userCreatedDate.getFullYear() < currentYear) {
+      startDate = new Date(currentYear, 0, 1);
+    } else {
+      startDate = new Date(
+        userCreatedDate.getFullYear(),
+        userCreatedDate.getMonth(),
+        1,
+      );
+    }
+
+    const practices = await ctx.db
+      .query("excerpt_practice")
+      .withIndex(
+        "by_user_and_time",
+        (q) => q.eq("userId", userId).gte("created_at", startDate.getTime()),
+      )
+      .order("asc") // Oldest first
+      .collect();
+
+    // Group practices into 2-week intervals
+    const groupedData: {
+      [key: string]: { totalAccuracy: number; count: number };
+    } = {};
+    const chartLabels: string[] = []; // To maintain chronological order of labels
+    const twoWeeksInMs = 14 * 24 * 60 * 60 * 1000;
+
+    // Determine the very first possible interval start for global alignment (e.g., first Monday of the year)
+    // This ensures all users' intervals align consistently regardless of their specific startDate.
+    const epochAlignmentDate = new Date(currentYear, 0, 1); // Jan 1st of the current year
+    let intervalStartCursor = new Date(epochAlignmentDate.getTime());
+
+    // Adjust cursor to be the actual startDate, or the start of the 2-week interval containing startDate
+    // Ensure the intervals start at consistent points (e.g., every other Monday)
+    while (intervalStartCursor.getTime() < startDate.getTime()) {
+      intervalStartCursor = new Date(
+        intervalStartCursor.getTime() + twoWeeksInMs,
+      );
+    }
+    // If startDate falls into an interval that started before it, use that earlier interval start
+    intervalStartCursor = new Date(
+      intervalStartCursor.getTime() - twoWeeksInMs,
+    );
+    if (intervalStartCursor.getTime() < epochAlignmentDate.getTime()) {
+      intervalStartCursor = epochAlignmentDate; // Don't go before beginning of the year
+    }
+    // Now, ensure intervalStartCursor is not greater than startDate
+    if (intervalStartCursor.getTime() > startDate.getTime()) {
+      intervalStartCursor = startDate; // If for some edge case, it went too far.
+    }
+
+    let currentIntervalStart = new Date(intervalStartCursor.getTime());
+    const referenceToday = new Date(); // Current date to limit intervals
+
+    // Populate labels and initialize groupedData for each 2-week interval
+    while (currentIntervalStart.getTime() <= referenceToday.getTime()) {
+      const labelDate = new Date(currentIntervalStart.getTime());
+      const label = `${
+        labelDate.toLocaleString("en-US", { month: "short" })
+      } ${labelDate.getDate()}`;
+      chartLabels.push(label);
+      groupedData[label] = { totalAccuracy: 0, count: 0 };
+      currentIntervalStart = new Date(
+        currentIntervalStart.getTime() + twoWeeksInMs,
+      );
+    }
+
+    let totalWordsCount = 0;
+
+    // Populate groupedData with actual accuracies from the fetched practices
+    practices.forEach((practice) => {
+      totalWordsCount += practice.total_words;
+      const practiceDate = new Date(practice.created_at);
+
+      let tempIntervalCursor = new Date(intervalStartCursor.getTime());
+
+      while (tempIntervalCursor.getTime() <= referenceToday.getTime()) {
+        const tempIntervalEnd = new Date(
+          tempIntervalCursor.getTime() + twoWeeksInMs,
+        );
+        if (
+          practiceDate.getTime() >= tempIntervalCursor.getTime() &&
+          practiceDate.getTime() < tempIntervalEnd.getTime()
+        ) {
+          const labelDate = new Date(tempIntervalCursor.getTime());
+          const label = `${
+            labelDate.toLocaleString("en-US", { month: "short" })
+          } ${labelDate.getDate()}`;
+          if (groupedData[label]) { // Ensure label exists (it should if interval generation is correct)
+            groupedData[label].totalAccuracy += practice.overall_accuracy;
+            groupedData[label].count += 1;
+          }
+          break; // Found the interval for this practice
+        }
+        tempIntervalCursor = new Date(
+          tempIntervalCursor.getTime() + twoWeeksInMs,
+        );
+      }
+    });
+
+    // Convert groupedData to the desired ChartDataItem format, maintaining label order
+    const result: ChartData[] = [];
+    chartLabels.forEach((label) => {
+      const data = groupedData[label];
+      result.push({
+        label: label,
+        accuracy: data.count > 0
+          ? parseFloat((data.totalAccuracy / data.count).toFixed(3)) * 100
+          : 0, // Round to 1 decimal
+      });
+    });
+
+    return {
+      chartData: result,
+      totalWords: totalWordsCount,
+    };
+  },
+});
 
 export const getUserActivitiyLog = query({
   args: { userId: v.optional(v.id("users")) },
@@ -154,6 +291,63 @@ export const getUserCommunityStats = query({
       chaptersCreatedLastWeek: chaptersCreatedLastWeek.length,
       chaptersLikedLastWeek: chaptersLikedLastWeek.length,
       chaptersBookmarkedLastWeek: chaptersBookmarkedLastWeek.length,
+    };
+  },
+});
+
+export const getUserPercentileAndDistribution = query({
+  args: {
+    userId: v.optional(v.id("users")),
+  },
+  handler: async (ctx, args) => {
+    const userId = args.userId || (await getUserIdFromContext(ctx));
+
+    const allUserIds = (await ctx.db.query("users").collect()).map((u) =>
+      u._id
+    );
+
+    // Calculate best accuracy for each user
+    const userAverages: Array<{ userId: Id<"users">; avg: number }> = [];
+
+    for (const uid of allUserIds) {
+      const avg = await getUserBestAccuracyFromTopAttempts(ctx, uid, 3);
+      if (avg > 0) {
+        userAverages.push({ userId: uid, avg });
+      }
+    }
+
+    userAverages.sort((a, b) => b.avg - a.avg);
+    const userRankIndex = userAverages.findIndex(
+      (u) => u.userId === userId,
+    );
+    const userRank = userRankIndex + 1;
+    const percentile = (
+      ((userAverages.length - userRankIndex) / userAverages.length) * 100
+    ).toFixed(2);
+
+    // 20 buckets: each bucket is 5% (0-5, 5-10, ..., 95-100)
+    const buckets = Array(20).fill(0);
+    for (const { avg } of userAverages) {
+      const bucketIndex = Math.min(Math.floor(avg * 100 / 5), 19);
+      buckets[bucketIndex]++;
+    }
+
+    const userAvgAccuracy = userAverages[userRankIndex]?.avg ?? 0;
+    const userBucket = Math.min(Math.floor(userAvgAccuracy * 100 / 5), 19);
+
+    const maxBucketCount = Math.max(...buckets, 1);
+
+    return {
+      userAccuracy: parseFloat(userAvgAccuracy.toFixed(4)),
+      userPercentile: parseFloat(percentile),
+      userRank,
+      totalUsers: userAverages.length,
+      histogram: buckets.map((count, index) => ({
+        range: `${index * 5}-${(index + 1) * 5}%`,
+        count,
+        isUserBucket: index === userBucket,
+        heightPercent: (count / maxBucketCount) * 100,
+      })),
     };
   },
 });
@@ -356,6 +550,16 @@ interface MeterData {
       };
     };
   };
+}
+
+interface ChartData {
+  label: string;
+  accuracy: number;
+}
+
+interface ChartDataItem {
+  chartData: ChartData[];
+  totalWords: number;
 }
 
 function formatActionType(actionType: string, metadata: any): string {

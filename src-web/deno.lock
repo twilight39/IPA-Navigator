@@ -16,12 +16,14 @@
     "npm:@types/react-dom@^19.1.5": "19.1.5_@types+react@19.1.5",
     "npm:@types/react@^19.1.5": "19.1.5",
     "npm:@vitejs/plugin-react@^4.3.4": "4.5.0_vite@6.3.5__@types+node@22.15.21__picomatch@4.0.2_@babel+core@7.27.1_@types+node@22.15.21",
+    "npm:chart.js@^4.5.1": "4.5.1",
     "npm:convex@^1.24.1": "1.24.1_@clerk+clerk-react@5.31.6__react@19.1.0__react-dom@19.1.0___react@19.1.0_react@19.1.0_react-dom@19.1.0__react@19.1.0",
     "npm:daisyui@^5.0.37": "5.0.37",
     "npm:eslint-plugin-react-hooks@^5.1.0": "5.2.0_eslint@9.27.0",
     "npm:eslint-plugin-react-refresh@~0.4.19": "0.4.20_eslint@9.27.0",
     "npm:eslint@^9.21.0": "9.27.0",
     "npm:globals@^15.15.0": "15.15.0",
+    "npm:react-chartjs-2@^5.3.0": "5.3.0_chart.js@4.5.1_react@19.1.0",
     "npm:react-dom@19": "19.1.0_react@19.1.0",
     "npm:react@19": "19.1.0",
     "npm:recordrtc@^5.6.2": "5.6.2",
@@ -500,6 +502,9 @@
         "@jridgewell/resolve-uri",
         "@jridgewell/sourcemap-codec"
       ]
+    },
+    "@kurkle/color@0.3.4": {
+      "integrity": "sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w=="
     },
     "@napi-rs/wasm-runtime@0.2.10": {
       "integrity": "sha512-bCsCyeZEwVErsGmyPNSzwfwFn4OdxBj0mmv6hOFucB/k81Ojdu68RbZdxYsRQUPc9l6SU5F/cG+bXgWs3oUgsQ==",
@@ -1111,6 +1116,12 @@
       "dependencies": [
         "ansi-styles",
         "supports-color"
+      ]
+    },
+    "chart.js@4.5.1": {
+      "integrity": "sha512-GIjfiT9dbmHRiYi6Nl2yFCq7kkwdkp1W/lp2J99rX0yo9tgJGn3lKQATztIjb5tVtevcBtIdICNWqlq5+E8/Pw==",
+      "dependencies": [
+        "@kurkle/color"
       ]
     },
     "chokidar@3.6.0": {
@@ -1761,6 +1772,13 @@
     "queue-microtask@1.2.3": {
       "integrity": "sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A=="
     },
+    "react-chartjs-2@5.3.0_chart.js@4.5.1_react@19.1.0": {
+      "integrity": "sha512-UfZZFnDsERI3c3CZGxzvNJd02SHjaSJ8kgW1djn65H1KK8rehwTjyrRKOG3VTMG8wtHZ5rgAO5oTHtHi9GCCmw==",
+      "dependencies": [
+        "chart.js",
+        "react"
+      ]
+    },
     "react-dom@19.1.0_react@19.1.0": {
       "integrity": "sha512-Xs1hdnE+DyKgeHJeJznQmYMIBG3TKIHJJT95Q58nHLSrElKlGQqDTR2HQ9fx5CN/Gk6Vh/kupBTDLU11/nDk/g==",
       "dependencies": [
@@ -2120,12 +2138,14 @@
         "npm:@types/react-dom@^19.1.5",
         "npm:@types/react@^19.1.5",
         "npm:@vitejs/plugin-react@^4.3.4",
+        "npm:chart.js@^4.5.1",
         "npm:convex@^1.24.1",
         "npm:daisyui@^5.0.37",
         "npm:eslint-plugin-react-hooks@^5.1.0",
         "npm:eslint-plugin-react-refresh@~0.4.19",
         "npm:eslint@^9.21.0",
         "npm:globals@^15.15.0",
+        "npm:react-chartjs-2@^5.3.0",
         "npm:react-dom@19",
         "npm:react@19",
         "npm:recordrtc@^5.6.2",
