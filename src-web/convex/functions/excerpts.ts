@@ -1,5 +1,13 @@
 import { v } from "convex/values";
-import { mutation, query } from "../_generated/server.js";
+import {
+  action,
+  internalMutation,
+  mutation,
+  query,
+} from "../_generated/server.js";
+import { analyzePhonemesFromPython } from "../models/api.ts";
+import { api, internal } from "../_generated/api.js";
+import type { Id } from "../_generated/dataModel.d.ts";
 
 export const getExcerptsForChapter = query({
   args: { chapterId: v.id("chapter") },
@@ -32,17 +40,63 @@ export const getExcerptsForChapter = query({
   },
 });
 
-export const addExcerpt = mutation({
+export const addExcerpt = action({
   args: {
     chapterId: v.id("chapter"),
     text: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<
+    {
+      success: boolean;
+      excerptId: Id<"excerpt">;
+      order: number;
+      id: Id<"chapter_excerpt">;
+    }
+  > => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Authentication required");
     }
 
+    try {
+      // Call Python API
+      const phonemeData = await analyzePhonemesFromPython(args.text, "us");
+
+      // Call internal mutation
+      const result = await ctx.runMutation(
+        internal.functions.excerpts.addExcerptMutation,
+        {
+          chapterId: args.chapterId,
+          text: args.text,
+          phonemes: phonemeData.phonemes,
+          phoneme_counts: phonemeData.counts,
+        },
+      );
+
+      return result;
+    } catch (error) {
+      console.error("Failed to analyze and add excerpt:", error);
+      throw error;
+    }
+  },
+});
+
+export const addExcerptMutation = internalMutation({
+  args: {
+    chapterId: v.id("chapter"),
+    text: v.string(),
+    phonemes: v.array(v.string()),
+    phoneme_counts: v.object({
+      vowels: v.number(),
+      consonants: v.number(),
+      diphthongs: v.number(),
+      difficult: v.number(),
+    }),
+  },
+  handler: async (ctx, args) => {
     const excerptId = await ctx.db.query(
       "excerpt",
     ).withIndex("by_text").filter((q) => q.eq(q.field("text"), args.text))
@@ -53,6 +107,8 @@ export const addExcerpt = mutation({
         } else {
           return ctx.db.insert("excerpt", {
             text: args.text,
+            phonemes: args.phonemes,
+            phoneme_counts: args.phoneme_counts,
           });
         }
       });
@@ -76,17 +132,60 @@ export const addExcerpt = mutation({
   },
 });
 
-export const updateExcerpt = mutation({
+export const updateExcerpt = action({
   args: {
     chapterExcerptId: v.id("chapter_excerpt"),
     text: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<
+    {
+      success: boolean;
+    }
+  > => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Authentication required");
     }
 
+    try {
+      // Call Python API
+      const phonemeData = await analyzePhonemesFromPython(args.text, "us");
+
+      // Call internal mutation
+      const result = await ctx.runMutation(
+        internal.functions.excerpts.updateExcerptMutation,
+        {
+          chapterExcerptId: args.chapterExcerptId,
+          text: args.text,
+          phonemes: phonemeData.phonemes,
+          phoneme_counts: phonemeData.counts,
+        },
+      );
+
+      return result;
+    } catch (error) {
+      console.error("Failed to analyze and update excerpt:", error);
+      throw error;
+    }
+  },
+});
+
+export const updateExcerptMutation = internalMutation({
+  args: {
+    chapterExcerptId: v.id("chapter_excerpt"),
+    text: v.string(),
+    phonemes: v.array(v.string()),
+    phoneme_counts: v.object({
+      vowels: v.number(),
+      consonants: v.number(),
+      diphthongs: v.number(),
+      difficult: v.number(),
+    }),
+  },
+  handler: async (ctx, args) => {
     const chapterExcerpt = await ctx.db.get(args.chapterExcerptId);
     if (!chapterExcerpt) {
       throw new Error("Chapter excerpt not found");
@@ -101,7 +200,11 @@ export const updateExcerpt = mutation({
     if (existingExcerpts.length > 0) {
       excerptId = existingExcerpts[0]._id;
     } else {
-      excerptId = await ctx.db.insert("excerpt", { text: args.text });
+      excerptId = await ctx.db.insert("excerpt", {
+        text: args.text,
+        phonemes: args.phonemes,
+        phoneme_counts: args.phoneme_counts,
+      });
     }
 
     await ctx.db.patch(args.chapterExcerptId, { excerptId });

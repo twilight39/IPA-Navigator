@@ -344,7 +344,7 @@ function ChapterPracticeComponent() {
   );
 }
 
-const PhonemeModal = ({
+export const PhonemeModal = ({
   analysisData,
   audioURL,
 }: {

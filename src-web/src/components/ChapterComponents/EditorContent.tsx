@@ -6,7 +6,7 @@ import {
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
-import { useMutation } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { internal } from "../../../convex/_generated/api.js";
 import {
   closestCenter,
@@ -48,7 +48,7 @@ export const EditorContent = ({
   chapterId,
   playAudio,
 }: EditorContentProps) => {
-  const addExcerptMutation = useMutation(
+  const addExcerptAction = useAction(
     internal.functions.excerpts.addExcerpt,
   );
 
@@ -56,7 +56,7 @@ export const EditorContent = ({
     const toastId = toast.loading("Adding new excerpt...");
     loading("saving");
 
-    addExcerptMutation({ chapterId, text: "" })
+    addExcerptAction({ chapterId, text: "" })
       .then(() => {
         toast.success("Excerpt added successfully", { id: toastId });
         loading("saved");
@@ -216,7 +216,7 @@ const ExcerptItem = ({
 
   const [text, setText] = useState(excerpt.text);
 
-  const updateExcerptMutation = useMutation(
+  const updateExcerptAction = useAction(
     internal.functions.excerpts.updateExcerpt,
   );
   const deleteExcerptMutation = useMutation(
@@ -255,7 +255,7 @@ const ExcerptItem = ({
       loading("saving");
 
       try {
-        await updateExcerptMutation({
+        await updateExcerptAction({
           chapterExcerptId: excerpt.id,
           text: text,
         });

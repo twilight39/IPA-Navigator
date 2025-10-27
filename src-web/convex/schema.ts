@@ -27,6 +27,13 @@ const chapterSchema = {
     ]),
   excerpt: defineTable({
     text: v.string(),
+    phonemes: v.array(v.string()), // ["p", "l", "ɪ", "z", ...]
+    phoneme_counts: v.object({
+      vowels: v.number(),
+      consonants: v.number(),
+      diphthongs: v.number(),
+      difficult: v.number(), // /ð/, /θ/, /ŋ/, /ɪ/, /ʃ/, /ʒ/
+    }),
   }).index("by_text", ["text"]),
   chapter_excerpt: defineTable({
     chapterId: v.id("chapter"),
@@ -65,7 +72,7 @@ const performanceSchema = {
   excerpt_practice: defineTable({
     userId: v.id("users"),
     excerptId: v.id("excerpt"),
-    chapterId: v.id("chapter"), // Denormalized for queries
+    chapterId: v.optional(v.id("chapter")), // Denormalized for queries
     overall_accuracy: v.number(),
     overall_confidence: v.number(),
     total_words: v.number(),
@@ -112,7 +119,7 @@ const performanceSchema = {
     userId: v.id("users"),
     /* chapter_excerpt has a revoked_at field */
     excerptId: v.id("excerpt"),
-    chapterId: v.id("chapter"),
+    chapterId: v.optional(v.id("chapter")),
     best_accuracy: v.number(),
     best_practice_id: v.id("excerpt_practice"),
     total_attempts: v.number(),
@@ -254,40 +261,25 @@ const classroomSchema = {
 };
 
 const mlSchema = {
-  // Track excerpt effectiveness per phoneme
-  excerpt_phoneme_effectiveness: defineTable({
-    excerptId: v.id("excerpt"),
+  recommendation_model: defineTable({
+    version: v.number(), // Increment on major resets
+    coefficients: v.array(v.number()), // Weights for each feature
+    feature_names: v.array(v.string()), // ["vowel_count", "consonant_count", ...]
+    learning_rate: v.number(), // Adaptive learning rate (0.01)
+    updated_at: v.number(),
+    total_updates: v.number(), // Track how many times model was updated
+  }),
+
+  user_phoneme_accuracy_stats: defineTable({
+    userId: v.id("users"),
     phoneme: v.string(),
-    total_practices: v.number(),
-    avg_improvement: v.number(), // Accuracy delta after practicing
-    users_improved: v.number(),
-    users_practiced: v.number(),
+    total_attempts: v.number(),
+    correct_count: v.number(),
+    accuracy: v.number(), // correct_count / total_attempts
     last_updated: v.number(),
   })
-    .index("by_phoneme", ["phoneme", "avg_improvement"])
-    .index("by_excerpt", ["excerptId"]),
-
-  // Track user improvement after practicing specific excerpts
-  user_phoneme_improvement: defineTable({
-    userId: v.id("users"),
-    phoneme: v.string(),
-    excerptId: v.id("excerpt"),
-    accuracy_before: v.number(),
-    accuracy_after: v.number(),
-    improvement: v.number(), // after - before
-    practiced_at: v.number(),
-  })
-    .index("by_user_phoneme", ["userId", "phoneme", "practiced_at"])
-    .index("by_excerpt_phoneme", ["excerptId", "phoneme"]),
-
-  // Track when user last practiced each excerpt (for diversity)
-  user_excerpt_recency: defineTable({
-    userId: v.id("users"),
-    excerptId: v.id("excerpt"),
-    last_practiced_at: v.number(),
-  })
-    .index("by_user", ["userId", "last_practiced_at"])
-    .index("by_user_excerpt", ["userId", "excerptId"]),
+    .index("by_user", ["userId"])
+    .index("by_user_phoneme", ["userId", "phoneme"]),
 };
 
 export default defineSchema({
@@ -298,4 +290,5 @@ export default defineSchema({
   ...feedbackSchema,
   ...socialSchema,
   ...classroomSchema,
+  ...mlSchema,
 });

@@ -137,3 +137,42 @@ async def align_audio(request: AlignmentRequest):
         "total_words": total_words,
         "word_results": word_results,
     }
+
+class AnalyzePhonemesRequest(BaseModel):
+    text: str
+    accent: str = "us"
+
+@app.post("/analyze-phonemes")
+async def analyze_phonemes(request: AnalyzePhonemesRequest):
+    """Analyze phonemes in text and return counts."""
+    try:
+        target_phonemes_by_word = get_target_phonemes_by_word(
+            request.text, request.accent
+        )
+
+        # Flatten all phonemes
+        all_phonemes = []
+        for word_data in target_phonemes_by_word:
+            all_phonemes.extend(word_data["phonemes"])
+
+        # Count by type
+        vowels = {"a", "e", "i", "o", "u", "ɪ", "ɛ", "æ", "ʌ", "ɔ", "ə", "ɑ", "ɒ", "ɐ"}
+        diphthongs = {"aɪ", "aʊ", "eɪ", "oʊ", "ɔɪ", "ɪə", "eə", "ʊə"}
+        difficult = {"ð", "θ", "ŋ", "ɪ", "ʃ", "ʒ", "ɹ"}
+
+        vowel_count = sum(1 for p in all_phonemes if p in vowels)
+        consonant_count = len(all_phonemes) - vowel_count  # Rough estimate
+        diphthong_count = sum(1 for p in all_phonemes if p in diphthongs)
+        difficult_count = sum(1 for p in all_phonemes if p in difficult)
+
+        return {
+            "phonemes": all_phonemes,
+            "counts": {
+                "vowels": vowel_count,
+                "consonants": consonant_count,
+                "diphthongs": diphthong_count,
+                "difficult": difficult_count,
+            },
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
