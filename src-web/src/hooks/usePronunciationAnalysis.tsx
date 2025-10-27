@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import RecordRTC from "recordrtc";
+import { useTTS } from "./useTTS";
 
 export interface PhonemeResult {
   position: number | null;
@@ -47,12 +48,7 @@ type Dialect = "us" | "uk";
 
 interface UsePronunciationAnalysisOptions {
   serverUrl?: string;
-  defaultDialect?: Dialect;
-}
-
-interface UsePronunciationAnalysisOptions {
-  serverUrl?: string;
-  defaultDialect?: Dialect;
+  userDialect?: Dialect;
 }
 
 export function usePronunciationAnalysis(
@@ -60,8 +56,9 @@ export function usePronunciationAnalysis(
 ) {
   const {
     serverUrl = "http://127.0.0.1:8000/align",
-    defaultDialect = "uk",
   } = options;
+
+  const { userVoice } = useTTS();
 
   const [isRecording, setIsRecording] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -70,6 +67,15 @@ export function usePronunciationAnalysis(
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const getDialectFromVoice = (voice: string | null): Dialect => {
+    if (!voice) return "uk";
+    if (voice.startsWith("american")) return "us";
+    if (voice.startsWith("british")) return "uk";
+    return "uk";
+  };
+
+  const userDialect = getDialectFromVoice(userVoice);
 
   // Start recording audio
   const startRecording = async () => {
@@ -153,7 +159,7 @@ export function usePronunciationAnalysis(
 
   const analyzeAudio = (
     transcript: string,
-    dialect: Dialect = defaultDialect,
+    dialect: Dialect = userDialect,
   ) => {
     if (!audioBlob) {
       const errorMessage = "No recording available to analyze";

@@ -5,6 +5,7 @@ const userSchema = {
   users: defineTable({
     tokenIdentifier: v.string(),
     name: v.string(),
+    preferred_tts_voice: v.optional(v.string()),
     picture_url: v.optional(v.string()),
   }).index("by_token", ["tokenIdentifier"])
     .index("by_name", ["name"]),

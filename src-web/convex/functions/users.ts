@@ -1,4 +1,6 @@
-import { mutation } from "../_generated/server.js";
+import { mutation, query } from "../_generated/server.js";
+import { getUserIdFromContext } from "../models/users.ts";
+import { v } from "convex/values";
 
 export const store = mutation({
   args: {},
@@ -36,5 +38,44 @@ export const store = mutation({
       tokenIdentifier: identity.tokenIdentifier,
       picture_url: identity.pictureUrl,
     });
+  },
+});
+
+export const setPreferredTTSVoice = mutation({
+  args: {
+    voice: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error(
+        "Called setPreferredTTSVoice without authentication present",
+      );
+    }
+
+    const user = await getUserIdFromContext(ctx);
+
+    await ctx.db.patch(user, {
+      preferred_tts_voice: args.voice,
+    });
+  },
+});
+
+export const getPreferredTTSVoice = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error(
+        "Called getPreferredTTSVoice without authentication present",
+      );
+    }
+
+    const user = await getUserIdFromContext(ctx);
+
+    const userRecord = await ctx.db.get(user);
+    return userRecord?.preferred_tts_voice
+      ? userRecord?.preferred_tts_voice
+      : null;
   },
 });

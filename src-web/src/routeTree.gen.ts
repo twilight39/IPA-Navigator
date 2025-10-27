@@ -15,6 +15,7 @@ import { Route as ProtectedRouteImport } from './routes/_protected/route'
 import { Route as AuthRouteImport } from './routes/_auth/route'
 import { Route as IndexImport } from './routes/index'
 import { Route as ProtectedTestImport } from './routes/_protected/test'
+import { Route as ProtectedSettingsImport } from './routes/_protected/settings'
 import { Route as ProtectedFocusSessionImport } from './routes/_protected/focus-session'
 import { Route as ProtectedDemoImport } from './routes/_protected/demo'
 import { Route as ProtectedDashboardImport } from './routes/_protected/dashboard'
@@ -47,6 +48,12 @@ const IndexRoute = IndexImport.update({
 const ProtectedTestRoute = ProtectedTestImport.update({
   id: '/test',
   path: '/test',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+
+const ProtectedSettingsRoute = ProtectedSettingsImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
 
@@ -186,6 +193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedFocusSessionImport
       parentRoute: typeof ProtectedRouteImport
     }
+    '/_protected/settings': {
+      id: '/_protected/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof ProtectedSettingsImport
+      parentRoute: typeof ProtectedRouteImport
+    }
     '/_protected/test': {
       id: '/_protected/test'
       path: '/test'
@@ -239,6 +253,7 @@ interface ProtectedRouteRouteChildren {
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
   ProtectedDemoRoute: typeof ProtectedDemoRoute
   ProtectedFocusSessionRoute: typeof ProtectedFocusSessionRoute
+  ProtectedSettingsRoute: typeof ProtectedSettingsRoute
   ProtectedTestRoute: typeof ProtectedTestRoute
   ProtectedChaptersIndexRoute: typeof ProtectedChaptersIndexRoute
   ProtectedChaptersChapterIdEditRoute: typeof ProtectedChaptersChapterIdEditRoute
@@ -251,6 +266,7 @@ const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
   ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedDemoRoute: ProtectedDemoRoute,
   ProtectedFocusSessionRoute: ProtectedFocusSessionRoute,
+  ProtectedSettingsRoute: ProtectedSettingsRoute,
   ProtectedTestRoute: ProtectedTestRoute,
   ProtectedChaptersIndexRoute: ProtectedChaptersIndexRoute,
   ProtectedChaptersChapterIdEditRoute: ProtectedChaptersChapterIdEditRoute,
@@ -272,6 +288,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof ProtectedDashboardRoute
   '/demo': typeof ProtectedDemoRoute
   '/focus-session': typeof ProtectedFocusSessionRoute
+  '/settings': typeof ProtectedSettingsRoute
   '/test': typeof ProtectedTestRoute
   '/chapters': typeof ProtectedChaptersIndexRoute
   '/chapters/$chapterId/edit': typeof ProtectedChaptersChapterIdEditRoute
@@ -288,6 +305,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof ProtectedDashboardRoute
   '/demo': typeof ProtectedDemoRoute
   '/focus-session': typeof ProtectedFocusSessionRoute
+  '/settings': typeof ProtectedSettingsRoute
   '/test': typeof ProtectedTestRoute
   '/chapters': typeof ProtectedChaptersIndexRoute
   '/chapters/$chapterId/edit': typeof ProtectedChaptersChapterIdEditRoute
@@ -306,6 +324,7 @@ export interface FileRoutesById {
   '/_protected/dashboard': typeof ProtectedDashboardRoute
   '/_protected/demo': typeof ProtectedDemoRoute
   '/_protected/focus-session': typeof ProtectedFocusSessionRoute
+  '/_protected/settings': typeof ProtectedSettingsRoute
   '/_protected/test': typeof ProtectedTestRoute
   '/_protected/chapters/': typeof ProtectedChaptersIndexRoute
   '/_protected/chapters/$chapterId/edit': typeof ProtectedChaptersChapterIdEditRoute
@@ -324,6 +343,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/demo'
     | '/focus-session'
+    | '/settings'
     | '/test'
     | '/chapters'
     | '/chapters/$chapterId/edit'
@@ -339,6 +359,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/demo'
     | '/focus-session'
+    | '/settings'
     | '/test'
     | '/chapters'
     | '/chapters/$chapterId/edit'
@@ -355,6 +376,7 @@ export interface FileRouteTypes {
     | '/_protected/dashboard'
     | '/_protected/demo'
     | '/_protected/focus-session'
+    | '/_protected/settings'
     | '/_protected/test'
     | '/_protected/chapters/'
     | '/_protected/chapters/$chapterId/edit'
@@ -407,6 +429,7 @@ export const routeTree = rootRoute
         "/_protected/dashboard",
         "/_protected/demo",
         "/_protected/focus-session",
+        "/_protected/settings",
         "/_protected/test",
         "/_protected/chapters/",
         "/_protected/chapters/$chapterId/edit",
@@ -439,6 +462,10 @@ export const routeTree = rootRoute
     },
     "/_protected/focus-session": {
       "filePath": "_protected/focus-session.tsx",
+      "parent": "/_protected"
+    },
+    "/_protected/settings": {
+      "filePath": "_protected/settings.tsx",
       "parent": "/_protected"
     },
     "/_protected/test": {
