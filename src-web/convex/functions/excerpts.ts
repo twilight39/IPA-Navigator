@@ -18,11 +18,8 @@ export const getExcerptsForChapter = query({
     }
 
     const chapterExcerpts = await ctx.db.query("chapter_excerpt")
-      .withIndex("by_chapter")
-      .filter((q) =>
-        q.eq(q.field("chapterId"), args.chapterId) &&
-        q.eq(q.field("revoked_at"), undefined)
-      )
+      .withIndex("by_chapter", (q) => q.eq("chapterId", args.chapterId))
+      .filter((q) => q.eq(q.field("revoked_at"), undefined))
       .order("asc")
       .collect();
 

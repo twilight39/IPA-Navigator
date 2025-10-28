@@ -20,10 +20,13 @@ import { Route as ProtectedFocusSessionImport } from './routes/_protected/focus-
 import { Route as ProtectedDemoImport } from './routes/_protected/demo'
 import { Route as ProtectedDashboardImport } from './routes/_protected/dashboard'
 import { Route as ProtectedCollectionImport } from './routes/_protected/collection'
-import { Route as ProtectedClassroomsImport } from './routes/_protected/classrooms'
 import { Route as AuthSignUpImport } from './routes/_auth/sign-up'
 import { Route as AuthSignInImport } from './routes/_auth/sign-in'
+import { Route as ProtectedClassroomsIndexImport } from './routes/_protected/classrooms/index'
 import { Route as ProtectedChaptersIndexImport } from './routes/_protected/chapters/index'
+import { Route as ProtectedClassroomsClassroomIdRouteImport } from './routes/_protected/classrooms/$classroomId/route'
+import { Route as ProtectedClassroomsClassroomIdIndexImport } from './routes/_protected/classrooms/$classroomId/index'
+import { Route as ProtectedClassroomsClassroomIdSettingsImport } from './routes/_protected/classrooms/$classroomId/settings'
 import { Route as ProtectedChaptersChapterIdPracticeImport } from './routes/_protected/chapters/$chapterId.practice'
 import { Route as ProtectedChaptersChapterIdEditImport } from './routes/_protected/chapters/$chapterId.edit'
 
@@ -81,12 +84,6 @@ const ProtectedCollectionRoute = ProtectedCollectionImport.update({
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
 
-const ProtectedClassroomsRoute = ProtectedClassroomsImport.update({
-  id: '/classrooms',
-  path: '/classrooms',
-  getParentRoute: () => ProtectedRouteRoute,
-} as any)
-
 const AuthSignUpRoute = AuthSignUpImport.update({
   id: '/sign-up',
   path: '/sign-up',
@@ -99,11 +96,38 @@ const AuthSignInRoute = AuthSignInImport.update({
   getParentRoute: () => AuthRouteRoute,
 } as any)
 
+const ProtectedClassroomsIndexRoute = ProtectedClassroomsIndexImport.update({
+  id: '/classrooms/',
+  path: '/classrooms/',
+  getParentRoute: () => ProtectedRouteRoute,
+} as any)
+
 const ProtectedChaptersIndexRoute = ProtectedChaptersIndexImport.update({
   id: '/chapters/',
   path: '/chapters/',
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
+
+const ProtectedClassroomsClassroomIdRouteRoute =
+  ProtectedClassroomsClassroomIdRouteImport.update({
+    id: '/classrooms/$classroomId',
+    path: '/classrooms/$classroomId',
+    getParentRoute: () => ProtectedRouteRoute,
+  } as any)
+
+const ProtectedClassroomsClassroomIdIndexRoute =
+  ProtectedClassroomsClassroomIdIndexImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => ProtectedClassroomsClassroomIdRouteRoute,
+  } as any)
+
+const ProtectedClassroomsClassroomIdSettingsRoute =
+  ProtectedClassroomsClassroomIdSettingsImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => ProtectedClassroomsClassroomIdRouteRoute,
+  } as any)
 
 const ProtectedChaptersChapterIdPracticeRoute =
   ProtectedChaptersChapterIdPracticeImport.update({
@@ -158,13 +182,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSignUpImport
       parentRoute: typeof AuthRouteImport
     }
-    '/_protected/classrooms': {
-      id: '/_protected/classrooms'
-      path: '/classrooms'
-      fullPath: '/classrooms'
-      preLoaderRoute: typeof ProtectedClassroomsImport
-      parentRoute: typeof ProtectedRouteImport
-    }
     '/_protected/collection': {
       id: '/_protected/collection'
       path: '/collection'
@@ -207,11 +224,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedTestImport
       parentRoute: typeof ProtectedRouteImport
     }
+    '/_protected/classrooms/$classroomId': {
+      id: '/_protected/classrooms/$classroomId'
+      path: '/classrooms/$classroomId'
+      fullPath: '/classrooms/$classroomId'
+      preLoaderRoute: typeof ProtectedClassroomsClassroomIdRouteImport
+      parentRoute: typeof ProtectedRouteImport
+    }
     '/_protected/chapters/': {
       id: '/_protected/chapters/'
       path: '/chapters'
       fullPath: '/chapters'
       preLoaderRoute: typeof ProtectedChaptersIndexImport
+      parentRoute: typeof ProtectedRouteImport
+    }
+    '/_protected/classrooms/': {
+      id: '/_protected/classrooms/'
+      path: '/classrooms'
+      fullPath: '/classrooms'
+      preLoaderRoute: typeof ProtectedClassroomsIndexImport
       parentRoute: typeof ProtectedRouteImport
     }
     '/_protected/chapters/$chapterId/edit': {
@@ -227,6 +258,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/chapters/$chapterId/practice'
       preLoaderRoute: typeof ProtectedChaptersChapterIdPracticeImport
       parentRoute: typeof ProtectedRouteImport
+    }
+    '/_protected/classrooms/$classroomId/settings': {
+      id: '/_protected/classrooms/$classroomId/settings'
+      path: '/settings'
+      fullPath: '/classrooms/$classroomId/settings'
+      preLoaderRoute: typeof ProtectedClassroomsClassroomIdSettingsImport
+      parentRoute: typeof ProtectedClassroomsClassroomIdRouteImport
+    }
+    '/_protected/classrooms/$classroomId/': {
+      id: '/_protected/classrooms/$classroomId/'
+      path: '/'
+      fullPath: '/classrooms/$classroomId/'
+      preLoaderRoute: typeof ProtectedClassroomsClassroomIdIndexImport
+      parentRoute: typeof ProtectedClassroomsClassroomIdRouteImport
     }
   }
 }
@@ -247,28 +292,49 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
   AuthRouteRouteChildren,
 )
 
+interface ProtectedClassroomsClassroomIdRouteRouteChildren {
+  ProtectedClassroomsClassroomIdSettingsRoute: typeof ProtectedClassroomsClassroomIdSettingsRoute
+  ProtectedClassroomsClassroomIdIndexRoute: typeof ProtectedClassroomsClassroomIdIndexRoute
+}
+
+const ProtectedClassroomsClassroomIdRouteRouteChildren: ProtectedClassroomsClassroomIdRouteRouteChildren =
+  {
+    ProtectedClassroomsClassroomIdSettingsRoute:
+      ProtectedClassroomsClassroomIdSettingsRoute,
+    ProtectedClassroomsClassroomIdIndexRoute:
+      ProtectedClassroomsClassroomIdIndexRoute,
+  }
+
+const ProtectedClassroomsClassroomIdRouteRouteWithChildren =
+  ProtectedClassroomsClassroomIdRouteRoute._addFileChildren(
+    ProtectedClassroomsClassroomIdRouteRouteChildren,
+  )
+
 interface ProtectedRouteRouteChildren {
-  ProtectedClassroomsRoute: typeof ProtectedClassroomsRoute
   ProtectedCollectionRoute: typeof ProtectedCollectionRoute
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
   ProtectedDemoRoute: typeof ProtectedDemoRoute
   ProtectedFocusSessionRoute: typeof ProtectedFocusSessionRoute
   ProtectedSettingsRoute: typeof ProtectedSettingsRoute
   ProtectedTestRoute: typeof ProtectedTestRoute
+  ProtectedClassroomsClassroomIdRouteRoute: typeof ProtectedClassroomsClassroomIdRouteRouteWithChildren
   ProtectedChaptersIndexRoute: typeof ProtectedChaptersIndexRoute
+  ProtectedClassroomsIndexRoute: typeof ProtectedClassroomsIndexRoute
   ProtectedChaptersChapterIdEditRoute: typeof ProtectedChaptersChapterIdEditRoute
   ProtectedChaptersChapterIdPracticeRoute: typeof ProtectedChaptersChapterIdPracticeRoute
 }
 
 const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
-  ProtectedClassroomsRoute: ProtectedClassroomsRoute,
   ProtectedCollectionRoute: ProtectedCollectionRoute,
   ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedDemoRoute: ProtectedDemoRoute,
   ProtectedFocusSessionRoute: ProtectedFocusSessionRoute,
   ProtectedSettingsRoute: ProtectedSettingsRoute,
   ProtectedTestRoute: ProtectedTestRoute,
+  ProtectedClassroomsClassroomIdRouteRoute:
+    ProtectedClassroomsClassroomIdRouteRouteWithChildren,
   ProtectedChaptersIndexRoute: ProtectedChaptersIndexRoute,
+  ProtectedClassroomsIndexRoute: ProtectedClassroomsIndexRoute,
   ProtectedChaptersChapterIdEditRoute: ProtectedChaptersChapterIdEditRoute,
   ProtectedChaptersChapterIdPracticeRoute:
     ProtectedChaptersChapterIdPracticeRoute,
@@ -283,16 +349,19 @@ export interface FileRoutesByFullPath {
   '': typeof ProtectedRouteRouteWithChildren
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
-  '/classrooms': typeof ProtectedClassroomsRoute
   '/collection': typeof ProtectedCollectionRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/demo': typeof ProtectedDemoRoute
   '/focus-session': typeof ProtectedFocusSessionRoute
   '/settings': typeof ProtectedSettingsRoute
   '/test': typeof ProtectedTestRoute
+  '/classrooms/$classroomId': typeof ProtectedClassroomsClassroomIdRouteRouteWithChildren
   '/chapters': typeof ProtectedChaptersIndexRoute
+  '/classrooms': typeof ProtectedClassroomsIndexRoute
   '/chapters/$chapterId/edit': typeof ProtectedChaptersChapterIdEditRoute
   '/chapters/$chapterId/practice': typeof ProtectedChaptersChapterIdPracticeRoute
+  '/classrooms/$classroomId/settings': typeof ProtectedClassroomsClassroomIdSettingsRoute
+  '/classrooms/$classroomId/': typeof ProtectedClassroomsClassroomIdIndexRoute
 }
 
 export interface FileRoutesByTo {
@@ -300,7 +369,6 @@ export interface FileRoutesByTo {
   '': typeof ProtectedRouteRouteWithChildren
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
-  '/classrooms': typeof ProtectedClassroomsRoute
   '/collection': typeof ProtectedCollectionRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/demo': typeof ProtectedDemoRoute
@@ -308,8 +376,11 @@ export interface FileRoutesByTo {
   '/settings': typeof ProtectedSettingsRoute
   '/test': typeof ProtectedTestRoute
   '/chapters': typeof ProtectedChaptersIndexRoute
+  '/classrooms': typeof ProtectedClassroomsIndexRoute
   '/chapters/$chapterId/edit': typeof ProtectedChaptersChapterIdEditRoute
   '/chapters/$chapterId/practice': typeof ProtectedChaptersChapterIdPracticeRoute
+  '/classrooms/$classroomId/settings': typeof ProtectedClassroomsClassroomIdSettingsRoute
+  '/classrooms/$classroomId': typeof ProtectedClassroomsClassroomIdIndexRoute
 }
 
 export interface FileRoutesById {
@@ -319,16 +390,19 @@ export interface FileRoutesById {
   '/_protected': typeof ProtectedRouteRouteWithChildren
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_auth/sign-up': typeof AuthSignUpRoute
-  '/_protected/classrooms': typeof ProtectedClassroomsRoute
   '/_protected/collection': typeof ProtectedCollectionRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
   '/_protected/demo': typeof ProtectedDemoRoute
   '/_protected/focus-session': typeof ProtectedFocusSessionRoute
   '/_protected/settings': typeof ProtectedSettingsRoute
   '/_protected/test': typeof ProtectedTestRoute
+  '/_protected/classrooms/$classroomId': typeof ProtectedClassroomsClassroomIdRouteRouteWithChildren
   '/_protected/chapters/': typeof ProtectedChaptersIndexRoute
+  '/_protected/classrooms/': typeof ProtectedClassroomsIndexRoute
   '/_protected/chapters/$chapterId/edit': typeof ProtectedChaptersChapterIdEditRoute
   '/_protected/chapters/$chapterId/practice': typeof ProtectedChaptersChapterIdPracticeRoute
+  '/_protected/classrooms/$classroomId/settings': typeof ProtectedClassroomsClassroomIdSettingsRoute
+  '/_protected/classrooms/$classroomId/': typeof ProtectedClassroomsClassroomIdIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -338,23 +412,25 @@ export interface FileRouteTypes {
     | ''
     | '/sign-in'
     | '/sign-up'
-    | '/classrooms'
     | '/collection'
     | '/dashboard'
     | '/demo'
     | '/focus-session'
     | '/settings'
     | '/test'
+    | '/classrooms/$classroomId'
     | '/chapters'
+    | '/classrooms'
     | '/chapters/$chapterId/edit'
     | '/chapters/$chapterId/practice'
+    | '/classrooms/$classroomId/settings'
+    | '/classrooms/$classroomId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | ''
     | '/sign-in'
     | '/sign-up'
-    | '/classrooms'
     | '/collection'
     | '/dashboard'
     | '/demo'
@@ -362,8 +438,11 @@ export interface FileRouteTypes {
     | '/settings'
     | '/test'
     | '/chapters'
+    | '/classrooms'
     | '/chapters/$chapterId/edit'
     | '/chapters/$chapterId/practice'
+    | '/classrooms/$classroomId/settings'
+    | '/classrooms/$classroomId'
   id:
     | '__root__'
     | '/'
@@ -371,16 +450,19 @@ export interface FileRouteTypes {
     | '/_protected'
     | '/_auth/sign-in'
     | '/_auth/sign-up'
-    | '/_protected/classrooms'
     | '/_protected/collection'
     | '/_protected/dashboard'
     | '/_protected/demo'
     | '/_protected/focus-session'
     | '/_protected/settings'
     | '/_protected/test'
+    | '/_protected/classrooms/$classroomId'
     | '/_protected/chapters/'
+    | '/_protected/classrooms/'
     | '/_protected/chapters/$chapterId/edit'
     | '/_protected/chapters/$chapterId/practice'
+    | '/_protected/classrooms/$classroomId/settings'
+    | '/_protected/classrooms/$classroomId/'
   fileRoutesById: FileRoutesById
 }
 
@@ -424,14 +506,15 @@ export const routeTree = rootRoute
     "/_protected": {
       "filePath": "_protected/route.tsx",
       "children": [
-        "/_protected/classrooms",
         "/_protected/collection",
         "/_protected/dashboard",
         "/_protected/demo",
         "/_protected/focus-session",
         "/_protected/settings",
         "/_protected/test",
+        "/_protected/classrooms/$classroomId",
         "/_protected/chapters/",
+        "/_protected/classrooms/",
         "/_protected/chapters/$chapterId/edit",
         "/_protected/chapters/$chapterId/practice"
       ]
@@ -443,10 +526,6 @@ export const routeTree = rootRoute
     "/_auth/sign-up": {
       "filePath": "_auth/sign-up.tsx",
       "parent": "/_auth"
-    },
-    "/_protected/classrooms": {
-      "filePath": "_protected/classrooms.tsx",
-      "parent": "/_protected"
     },
     "/_protected/collection": {
       "filePath": "_protected/collection.tsx",
@@ -472,8 +551,20 @@ export const routeTree = rootRoute
       "filePath": "_protected/test.tsx",
       "parent": "/_protected"
     },
+    "/_protected/classrooms/$classroomId": {
+      "filePath": "_protected/classrooms/$classroomId/route.tsx",
+      "parent": "/_protected",
+      "children": [
+        "/_protected/classrooms/$classroomId/settings",
+        "/_protected/classrooms/$classroomId/"
+      ]
+    },
     "/_protected/chapters/": {
       "filePath": "_protected/chapters/index.tsx",
+      "parent": "/_protected"
+    },
+    "/_protected/classrooms/": {
+      "filePath": "_protected/classrooms/index.tsx",
       "parent": "/_protected"
     },
     "/_protected/chapters/$chapterId/edit": {
@@ -483,6 +574,14 @@ export const routeTree = rootRoute
     "/_protected/chapters/$chapterId/practice": {
       "filePath": "_protected/chapters/$chapterId.practice.tsx",
       "parent": "/_protected"
+    },
+    "/_protected/classrooms/$classroomId/settings": {
+      "filePath": "_protected/classrooms/$classroomId/settings.tsx",
+      "parent": "/_protected/classrooms/$classroomId"
+    },
+    "/_protected/classrooms/$classroomId/": {
+      "filePath": "_protected/classrooms/$classroomId/index.tsx",
+      "parent": "/_protected/classrooms/$classroomId"
     }
   }
 }

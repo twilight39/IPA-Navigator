@@ -234,10 +234,15 @@ const classroomSchema = {
     name: v.string(),
     description: v.optional(v.string()),
     teacherId: v.id("users"),
+    visibility: v.union(v.literal("public"), v.literal("private")),
+    imageId: v.optional(v.id("_storage")),
+    inviteCode: v.optional(v.string()),
     created_at: v.number(),
     updated_at: v.number(),
     archived_at: v.optional(v.number()),
-  }).index("by_teacher", ["teacherId", "archived_at"]),
+  })
+    .index("by_teacher", ["teacherId", "archived_at"])
+    .index("by_visibility", ["visibility", "archived_at"]),
 
   classroom_enrollment: defineTable({
     classroomId: v.id("classroom"),
@@ -254,10 +259,11 @@ const classroomSchema = {
     classroomId: v.id("classroom"),
     chapterId: v.id("chapter"),
     assignedBy: v.id("users"),
+    order: v.number(), // Position in classroom chapter list
     due_date: v.optional(v.number()),
     assigned_at: v.number(),
   })
-    .index("by_classroom", ["classroomId", "due_date"])
+    .index("by_classroom", ["classroomId", "order"])
     .index("by_chapter", ["chapterId"]),
 };
 
