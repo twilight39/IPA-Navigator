@@ -19,6 +19,7 @@ import { useStoreUserEffect } from "../../../hooks/useStoreUserEffect.tsx";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api.js";
 import { ChapterCreateModal } from "../../../components/AddChapterModal.tsx";
+import { ChaptersInProgressTab } from "../../../components/ChaptersInProgressTab.tsx";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
@@ -39,10 +40,8 @@ function ChaptersComponent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
   const chapters: Chapter[] =
-    useQuery(api.functions.chapters.getChapters, {}) || [];
+    useQuery(api.functions.chapters.getChaptersWithProgress, {}) || [];
   const { userId, isLoading } = useStoreUserEffect();
-
-  console.log(chapters);
 
   return (
     <div className="space-y-4 p-4 mx-auto">
@@ -101,34 +100,47 @@ function ChaptersComponent() {
           </a>
           <a
             className={`tab px-4 py-2 flex items-center rounded-lg ${
-              activeTab === "following" ? "bg-slate-200 tab-active" : ""
+              activeTab === "in-progress" ? "bg-slate-200 tab-active" : ""
             }`}
-            onClick={() => setActiveTab("following")}
+            onClick={() => setActiveTab("in-progress")}
           >
             <UsersThreeIcon size={18} className="mr-2" />
-            Following
+            In Progress
           </a>
         </div>
       </div>
 
-      <ChapterFilters
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        selectedCategories={selectedCategory}
-        setSelectedCategories={setSelectedCategory}
-      />
+      {activeTab === "in-progress"
+        ? (
+          <>
+            <ChaptersInProgressTab
+              chapters={chapters}
+              userId={userId}
+            />
+          </>
+        )
+        : (
+          <>
+            <ChapterFilters
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedCategories={selectedCategory}
+              setSelectedCategories={setSelectedCategory}
+            />
 
-      <ChapterGrid
-        chapters={activeTab === "my-chapters"
-          ? chapters.filter((chapter) => chapter.created_by === userId)
-          : activeTab === "bookmarked"
-          ? chapters.filter((chapter) => chapter.isBookmarked)
-          : chapters}
-        activeTab={activeTab}
-        searchQuery={searchQuery}
-        selectedCategories={selectedCategory}
-        userId={userId}
-      />
+            <ChapterGrid
+              chapters={activeTab === "my-chapters"
+                ? chapters.filter((chapter) => chapter.created_by === userId)
+                : activeTab === "bookmarked"
+                ? chapters.filter((chapter) => chapter.isBookmarked)
+                : chapters}
+              activeTab={activeTab}
+              searchQuery={searchQuery}
+              selectedCategories={selectedCategory}
+              userId={userId}
+            />
+          </>
+        )}
 
       <ChapterCreateModal />
     </div>
@@ -138,7 +150,7 @@ function ChaptersComponent() {
 type Chapter = {
   _id: string;
   name: string;
-  categories: [{ name: string; _id: string }];
+  categories: Array<{ name: string; _id: string }>;
   difficulty: string;
   description: string | null;
   created_at: number;
@@ -148,6 +160,13 @@ type Chapter = {
   imageUrl: string | null;
   isLiked: boolean;
   isBookmarked: boolean;
+  progress: {
+    completedCount: number;
+    totalCount: number;
+    accuracy: number;
+    completed: boolean;
+    updatedAt: number;
+  } | null;
 };
 
 // ChapterFilters component
@@ -290,6 +309,12 @@ function ChapterCard(
     "Advanced": "bg-red-100 text-red-800",
   }[chapter.difficulty] || "bg-blue-100 text-blue-800";
 
+  const radialColor = {
+    "Beginner": "bg-green-100 text-green-600",
+    "Intermediate": "bg-yellow-100 text-yellow-600",
+    "Advanced": "bg-red-100 text-red-600",
+  }[chapter.difficulty] || "bg-blue-100 text-blue-600";
+
   const formattedDate = new Date(chapter.created_at).toLocaleDateString();
 
   return (
@@ -312,6 +337,38 @@ function ChapterCard(
             {chapter.difficulty}
           </span>
         </div>
+
+        {/* Progress Ring - Bottom Right */}
+        {chapter.progress && chapter.progress.totalCount > 0 && (
+          <div className="absolute bottom-2 right-2 flex items-center gap-2 rounded-lg px-2 py-1">
+            <div
+              className={`radial-progress ${radialColor}`}
+              style={{
+                "--value": Math.round(
+                  (chapter.progress.completedCount /
+                    chapter.progress.totalCount) *
+                    100,
+                ),
+                "--size": "2.5rem",
+                "--thickness": "3px",
+              } as React.CSSProperties}
+              aria-valuenow={Math.round(
+                (chapter.progress.completedCount /
+                  chapter.progress.totalCount) *
+                  100,
+              )}
+              role="progressbar"
+            >
+              <span className="text-xs font-bold">
+                {Math.round(
+                  (chapter.progress.completedCount /
+                    chapter.progress.totalCount) *
+                    100,
+                )}%
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="card-body p-5">

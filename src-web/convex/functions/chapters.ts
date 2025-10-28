@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server.js";
 import { buildCategoryTree, stripCategoryFields } from "../models/chapters.ts";
+import { getUserIdFromContext } from "../models/users.ts";
 
 export const getChapter = query({
   args: { chapterId: v.id("chapter") },
@@ -387,5 +388,125 @@ export const getCategories = query({
       cat.type !== "difficulty"
     );
     return stripCategoryFields(buildCategoryTree(filteredCategories));
+  },
+});
+
+export const getChaptersWithProgress = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Authentication required");
+    }
+
+    const user = await getUserIdFromContext(ctx);
+
+    // Get all chapters
+    const chapters = await ctx.db.query("chapter")
+      .withIndex("by_name")
+      .filter((q) => q.eq(q.field("revoked_at"), undefined))
+      .order("asc")
+      .collect();
+
+    // Get user's progress for all chapters
+    const userProgress = await ctx.db
+      .query("user_chapter_progress")
+      .withIndex("by_user", (q) => q.eq("userId", user))
+      .collect();
+
+    const progressMap = new Map();
+    userProgress.forEach((p) => {
+      progressMap.set(p.chapterId.toString(), p);
+    });
+
+    // Get creator info
+    const userIds = [
+      ...new Set(chapters.map((chapter) => chapter.created_by)),
+    ];
+    const users = await Promise.all(
+      userIds.map((id) => ctx.db.get(id)),
+    );
+
+    const userMap = new Map();
+    users.forEach((u) => {
+      if (u) {
+        userMap.set(u._id.toString(), [u.name, u.picture_url]);
+      }
+    });
+
+    // Get chapter categories
+    const chapterCategories = await ctx.db.query("chapter_category")
+      .withIndex("by_chapter")
+      .collect();
+
+    const categoryTypes = await ctx.db.query("category")
+      .withIndex("by_type")
+      .collect();
+
+    // Get user likes and bookmarks
+    const userLikes = await ctx.db
+      .query("chapter_like")
+      .withIndex("by_user", (q) => q.eq("userId", user))
+      .collect();
+    const likedChapterIds = new Set(
+      userLikes.map((like) => like.chapterId),
+    );
+
+    const userSaves = await ctx.db
+      .query("chapter_bookmark")
+      .withIndex("by_user", (q) => q.eq("userId", user))
+      .collect();
+    const savedChapterIds = new Set(
+      userSaves.map((save) => save.chapterId),
+    );
+
+    return await Promise.all(chapters.map(async (chapter) => {
+      let imageUrl = null;
+      if (chapter.imageId) {
+        imageUrl = await ctx.storage.getUrl(chapter.imageId);
+      }
+
+      const relatedCategories = chapterCategories.filter((cc) =>
+        cc.chapterId.toString() === chapter._id.toString()
+      );
+
+      const categories = relatedCategories.map((rc) =>
+        categoryTypes.find((cat) =>
+          cat._id.toString() === rc.categoryId.toString()
+        )
+      );
+
+      const difficulty = categories.filter((cat) =>
+        cat?.type === "difficulty"
+      ).map((cat) => cat?.name)[0] || "N/A";
+
+      const progress = progressMap.get(chapter._id.toString());
+
+      return {
+        ...chapter,
+        isLiked: likedChapterIds.has(chapter._id),
+        isBookmarked: savedChapterIds.has(chapter._id),
+        creator_name: userMap.get(chapter.created_by.toString())?.[0] ||
+          "Unknown User",
+        creator_picture_url: userMap.get(
+          chapter.created_by.toString(),
+        )?.[1] ||
+          undefined,
+        imageUrl,
+        difficulty,
+        categories: categories.filter((cat) =>
+          cat?.type !== "difficulty"
+        ),
+        progress: progress
+          ? {
+            completedCount: progress.completed_excerpts_count,
+            totalCount: progress.total_excerpts_in_chapter,
+            accuracy: progress.overall_accuracy,
+            completed: progress.completed,
+            updatedAt: progress.updated_at,
+          }
+          : null,
+      };
+    }));
   },
 });
