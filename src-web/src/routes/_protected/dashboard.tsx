@@ -11,6 +11,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api.js";
 import { UserProfile } from "@clerk/clerk-react";
 // @ts-types="react"
+import { BadgesDisplay } from "../../components/BadgesDisplay.tsx";
 import { useState } from "react";
 
 import {
@@ -610,11 +611,8 @@ function DashboardComponent() {
             </div>
           </div>
           <div className="card bg-base-100 shadow-md flex-1">
-            <div className="card-body p-2 px-4">
-              <div className="flex flex-col py-1">
-                <p className="text-sm text-gray-500 flex-grow-0">Badges</p>
-                <p className="text-2xl">0</p>
-              </div>
+            <div className="card-body p-4">
+              <BadgesDisplay />
             </div>
           </div>
         </div>

@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as crons from "../crons.js";
+import type * as functions_badgeSvgGenerator from "../functions/badgeSvgGenerator.js";
 import type * as functions_chapters from "../functions/chapters.js";
 import type * as functions_classrooms from "../functions/classrooms.js";
 import type * as functions_dashboard from "../functions/dashboard.js";
@@ -26,6 +27,7 @@ import type * as functions_phonemes from "../functions/phonemes.js";
 import type * as functions_social from "../functions/social.js";
 import type * as functions_users from "../functions/users.js";
 import type * as models_api from "../models/api.js";
+import type * as models_badges from "../models/badges.js";
 import type * as models_chapters from "../models/chapters.js";
 import type * as models_performance from "../models/performance.js";
 import type * as models_users from "../models/users.js";
@@ -40,6 +42,7 @@ import type * as models_users from "../models/users.js";
  */
 declare const fullApi: ApiFromModules<{
   crons: typeof crons;
+  "functions/badgeSvgGenerator": typeof functions_badgeSvgGenerator;
   "functions/chapters": typeof functions_chapters;
   "functions/classrooms": typeof functions_classrooms;
   "functions/dashboard": typeof functions_dashboard;
@@ -52,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   "functions/social": typeof functions_social;
   "functions/users": typeof functions_users;
   "models/api": typeof models_api;
+  "models/badges": typeof models_badges;
   "models/chapters": typeof models_chapters;
   "models/performance": typeof models_performance;
   "models/users": typeof models_users;

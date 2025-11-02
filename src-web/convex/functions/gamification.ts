@@ -216,3 +216,80 @@ export const selectDailyChapter = internalMutation({
     });
   },
 });
+
+export const earnBadge = mutation({
+  args: {
+    badgeId: v.string(),
+    badgeName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Authentication required");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex(
+        "by_token",
+        (q) => q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) throw new Error("User not found");
+
+    // Check if already earned
+    const existing = await ctx.db
+      .query("user_badges")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.eq(q.field("badgeId"), args.badgeId))
+      .first();
+
+    if (existing) {
+      throw new Error("Badge already earned");
+    }
+
+    // Add badge
+    await ctx.db.insert("user_badges", {
+      userId: user._id,
+      badgeId: args.badgeId,
+      earnedAt: Date.now(),
+    });
+
+    // Create notification
+    await ctx.db.insert("notifications", {
+      userId: user._id,
+      type: "badge_earned",
+      title: `🎉 Unlocked: ${args.badgeName}!`,
+      message: `You've earned the ${args.badgeName} badge!`,
+      metadata: {
+        badgeName: args.badgeName,
+      },
+      read: false,
+      createdAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+export const getUserBadges = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Authentication required");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex(
+        "by_token",
+        (q) => q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) throw new Error("User not found");
+
+    return await ctx.db
+      .query("user_badges")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+  },
+});
