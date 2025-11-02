@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import RecordRTC from "recordrtc";
-import { useTTS } from "./useTTS";
+import { useTTS } from "./useTTS.tsx";
 
 export interface PhonemeResult {
   position: number | null;
@@ -67,6 +67,36 @@ export function usePronunciationAnalysis(
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const stopAllTracks = () => {
+    try {
+      const internalRecorder = recorder?.getInternalRecorder();
+      internalRecorder?.stream?.getTracks().forEach(
+        (track: MediaStreamTrack) => track.stop(),
+      );
+    } catch (e) {
+      console.warn("Error stopping tracks:", e);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      // Only cleanup on unmount, not on state changes
+      if (recorder) {
+        if (isRecording) {
+          recorder.stopRecording(() => {
+            stopAllTracks();
+          });
+        } else {
+          stopAllTracks();
+        }
+      }
+      // Revoke audio URL to free memory
+      if (audioURL) {
+        URL.revokeObjectURL(audioURL);
+      }
+    };
+  }, []); // Empty dependency - only on unmount
 
   const getDialectFromVoice = (voice: string | null): Dialect => {
     if (!voice) return "uk";
@@ -217,46 +247,19 @@ export function usePronunciationAnalysis(
   };
 
   const reset = () => {
+    if (recorder && isRecording) {
+      stopRecording(); // Ensure recording is stopped
+    }
+    if (audioURL) {
+      URL.revokeObjectURL(audioURL);
+    }
+
     setIsRecording(false);
     setIsAnalyzing(false);
     setResult(null);
     setError(null);
     setAudioBlob(null);
     setAudioURL(null);
-
-    if (recorder) {
-      // Stop recording if still active
-      if (isRecording) {
-        recorder.stopRecording(() => {
-          try {
-            const internalRecorder = recorder.getInternalRecorder();
-            if (internalRecorder && internalRecorder.stream) {
-              internalRecorder.stream.getTracks().forEach(
-                (track: MediaStreamTrack) => {
-                  track.stop();
-                },
-              );
-            }
-          } catch (e) {
-            console.warn("Could not clean up media stream in reset:", e);
-          }
-        });
-      } else {
-        // Just clean up streams if recording already stopped
-        try {
-          const internalRecorder = recorder.getInternalRecorder();
-          if (internalRecorder && internalRecorder.stream) {
-            internalRecorder.stream.getTracks().forEach(
-              (track: MediaStreamTrack) => {
-                track.stop();
-              },
-            );
-          }
-        } catch (e) {
-          console.warn("Could not clean up media stream in reset:", e);
-        }
-      }
-    }
     setRecorder(null);
   };
 

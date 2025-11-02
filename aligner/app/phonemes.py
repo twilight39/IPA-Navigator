@@ -5,8 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from functools import lru_cache
 import difflib
-from .wav2vec import Phoneme
-
+from .wav2vec import Phoneme, is_valid_phoneme
 
 
 # Initialize panphon feature table globally
@@ -37,7 +36,12 @@ def get_target_phonemes_by_word(text: str, accent: str) -> list[WordPhonemes]:
     phoneme_words = phonemes.split(" ")
 
     return [
-        {"word": word, "phonemes": list(phoneme_word) if phoneme_word else []}
+        {
+            "word": word,
+            "phonemes": normalize_target_phonemes(
+                parse_phoneme_string(phoneme_word) if phoneme_word else []
+            ),
+        }
         for word, phoneme_word in zip(words, phoneme_words)
         if word
     ]
@@ -55,7 +59,9 @@ def calculate_phoneme_similarity(phoneme1: str, phoneme2: str) -> float:
         return calculate_phoneme_similarity_rule_based(phoneme1, phoneme2)
 
     try:
-        print(f"Calculating similarity between '{phoneme1}' and '{phoneme2}' using panphon...")
+        print(
+            f"Calculating similarity between '{phoneme1}' and '{phoneme2}' using panphon..."
+        )
 
         # Get feature vectors from panphon
         features1 = ft.word_fts(phoneme1)[0] if ft.word_fts(phoneme1) else None
@@ -77,8 +83,14 @@ def calculate_phoneme_similarity(phoneme1: str, phoneme2: str) -> float:
                 return 0.0
             return 0.0  # fallback for other strings
 
-        vec1 = np.array(list([panphon_feature_to_float(feature) for feature in features1]), dtype=np.float32).reshape(1, -1)
-        vec2 = np.array(list([panphon_feature_to_float(feature) for feature in features2]), dtype=np.float32).reshape(1, -1)
+        vec1 = np.array(
+            list([panphon_feature_to_float(feature) for feature in features1]),
+            dtype=np.float32,
+        ).reshape(1, -1)
+        vec2 = np.array(
+            list([panphon_feature_to_float(feature) for feature in features2]),
+            dtype=np.float32,
+        ).reshape(1, -1)
 
         cos_sim = cosine_similarity(vec1, vec2)[0][0]
         similarity = (cos_sim + 1) / 2.0
@@ -399,7 +411,11 @@ def calculate_detailed_phoneme_analysis(
     detected: list[Phoneme], target: list[str]
 ) -> PhonemeAnalysis:
     """Calculate detailed phoneme-level analysis with individual phoneme results."""
-    detected_phonemes = [p["phoneme"] for p in detected if p["phoneme"].strip()]
+    detected_phonemes = [
+        p["phoneme"]
+        for p in detected
+        if p["phoneme"].strip() and is_valid_phoneme(p["phoneme"])
+    ]
 
     # Use sequence alignment to get operations
     matcher = difflib.SequenceMatcher(None, target, detected_phonemes)
@@ -577,3 +593,124 @@ def calculate_detailed_phoneme_analysis(
         "phoneme_results": phoneme_results,
         "word_accuracy": round(word_accuracy, 3),
     }
+
+
+DIPHTHONGS_TO_COMBINE = {
+    ("a", "ɪ"): "aɪ",
+    ("a", "ʊ"): "aʊ",
+    ("e", "ɪ"): "eɪ",
+    ("o", "ʊ"): "oʊ",
+    ("ɔ", "ɪ"): "ɔɪ",
+    ("ɪ", "ə"): "ɪə",
+    ("e", "ə"): "eə",
+    ("ʊ", "ə"): "ʊə",
+}
+
+
+def normalize_target_phonemes(phonemes: list[str]) -> list[str]:
+    """
+    Normalize target phonemes by:
+    1. Combining vowels with length markers (u + ː → uː)
+    2. Combining split diphthongs (a + ɪ → aɪ)
+    3. Applying English phonetic rules
+    """
+    if not phonemes:
+        return phonemes
+
+    normalized: list[str] = []
+    i = 0
+
+    while i < len(phonemes):
+        current = phonemes[i]
+
+        # FIRST: Check if current + next form a diphthong
+        if i + 1 < len(phonemes):
+            pair = (current, phonemes[i + 1])
+            if pair in DIPHTHONGS_TO_COMBINE:
+                normalized.append(DIPHTHONGS_TO_COMBINE[pair])
+                i += 2
+                continue
+
+        # SECOND: Check if next phoneme is a length marker
+        if (
+            i + 1 < len(phonemes)
+            and phonemes[i + 1] == "ː"
+            and is_vowel_phoneme(current)
+        ):
+            normalized.append(current + "ː")
+            i += 2
+        # THIRD: Keep phoneme if it's not a standalone length marker
+        elif current != "ː":
+            normalized.append(current)
+            i += 1
+        else:
+            # Skip standalone length markers
+            i += 1
+
+    # Apply English phonetic rules: final unstressed /i/ becomes /iː/
+    if normalized:
+        last_idx = len(normalized) - 1
+        if (
+            normalized[last_idx] == "i"
+            and last_idx > 0
+            and is_vowel_phoneme(normalized[last_idx - 1])
+        ):
+            normalized[last_idx] = "iː"
+
+    return normalized
+
+
+def is_vowel_phoneme(phoneme: str) -> bool:
+    """Check if a phoneme is a vowel."""
+    vowels = {
+        "a",
+        "e",
+        "i",
+        "o",
+        "u",
+        "ɪ",
+        "ɛ",
+        "æ",
+        "ʌ",
+        "ɔ",
+        "ə",
+        "ɑ",
+        "ɒ",
+        "ɐ",
+        "iː",
+        "eː",
+        "uː",
+        "oː",
+        "ɑː",
+        "ɔː",
+    }
+    return phoneme in vowels
+
+
+def parse_phoneme_string(phoneme_str: str) -> list[str]:
+    """
+    Parse a phoneme string into individual phonemes, handling multi-character phonemes.
+
+    Examples:
+    "aɪs" → ["aɪ", "s"]
+    "ɔːl" → ["ɔː", "l"]
+    "skɹiːm" → ["s", "k", "ɹ", "iː", "m"]
+    """
+    if not phoneme_str:
+        return []
+
+    phonemes: list[str] = []
+    i = 0
+
+    while i < len(phoneme_str):
+        current = phoneme_str[i]
+
+        # Check if next character is a length marker or ties
+        if i + 1 < len(phoneme_str) and phoneme_str[i + 1] in "ːˑ‿":
+            phonemes.append(current + phoneme_str[i + 1])
+            i += 2
+        else:
+            phonemes.append(current)
+            i += 1
+
+    return phonemes

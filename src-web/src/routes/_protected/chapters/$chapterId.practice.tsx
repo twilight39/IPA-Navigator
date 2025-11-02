@@ -125,17 +125,17 @@ function ChapterPracticeComponent() {
 
   const handleNextExcerpt = () => {
     if (excerpts && currentExcerptIndex < excerpts.length - 1) {
+      handleReset();
       setCurrentExcerptIndex((prev) => Math.min(prev + 1, excerpts.length - 1));
       stopAudio();
-      handleReset();
     }
   };
 
   const handlePreviousExcerpt = () => {
     if (currentExcerptIndex > 0) {
+      handleReset();
       setCurrentExcerptIndex((prev) => Math.max(prev - 1, 0));
       stopAudio();
-      handleReset();
     }
   };
 

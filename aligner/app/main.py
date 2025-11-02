@@ -1,5 +1,8 @@
 import os
-os.environ['PHONEMIZER_ESPEAK_LIBRARY'] = '/opt/homebrew/Cellar/espeak-ng/1.52.0/lib/libespeak-ng.dylib'
+
+os.environ["PHONEMIZER_ESPEAK_LIBRARY"] = (
+    "/opt/homebrew/Cellar/espeak-ng/1.52.0/lib/libespeak-ng.dylib"
+)
 print("Set Espeak Dylib Path.")
 
 from fastapi import FastAPI, HTTPException
@@ -20,7 +23,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Should be restricted in production
+    allow_origins=["*"],  # Should be restricted in production
     allow_credentials=True,
     allow_methods=["POST"],
     allow_headers=["*"],
@@ -33,6 +36,7 @@ class AlignmentRequest(BaseModel):
     audio_data: str
     transcript: str
     accent: str = "us"
+
 
 @app.post("/align")
 async def align_audio(request: AlignmentRequest):
@@ -85,6 +89,8 @@ async def align_audio(request: AlignmentRequest):
                 float(word_alignment["end_time"])
                 if word_alignment["end_time"]
                 else 0.0,
+                len(target_phonemes),
+                max_buffer_s=0.5,
             )
 
             phoneme_analysis = calculate_detailed_phoneme_analysis(
@@ -131,16 +137,20 @@ async def align_audio(request: AlignmentRequest):
         else 0.0
     )
 
-    return {
+    results = {
         "overall_accuracy": round(overall_accuracy, 3),
         "overall_confidence": float(round(overall_confidence, 3)),
         "total_words": total_words,
         "word_results": word_results,
     }
 
+    return convert_numpy_types(results)
+
+
 class AnalyzePhonemesRequest(BaseModel):
     text: str
     accent: str = "us"
+
 
 @app.post("/analyze-phonemes")
 async def analyze_phonemes(request: AnalyzePhonemesRequest):
@@ -176,3 +186,19 @@ async def analyze_phonemes(request: AnalyzePhonemesRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def convert_numpy_types(obj):
+    """Recursively convert numpy types to Python native types for JSON serialization."""
+    if isinstance(obj, dict):
+        return {k: convert_numpy_types(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [convert_numpy_types(item) for item in obj]
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    else:
+        return obj
