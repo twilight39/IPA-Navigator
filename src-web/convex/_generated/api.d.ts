@@ -13,11 +13,13 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as crons from "../crons.js";
 import type * as functions_chapters from "../functions/chapters.js";
 import type * as functions_classrooms from "../functions/classrooms.js";
 import type * as functions_dashboard from "../functions/dashboard.js";
 import type * as functions_excerpts from "../functions/excerpts.js";
 import type * as functions_files from "../functions/files.js";
+import type * as functions_gamification from "../functions/gamification.js";
 import type * as functions_ml from "../functions/ml.js";
 import type * as functions_performance from "../functions/performance.js";
 import type * as functions_phonemes from "../functions/phonemes.js";
@@ -37,11 +39,13 @@ import type * as models_users from "../models/users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
   "functions/chapters": typeof functions_chapters;
   "functions/classrooms": typeof functions_classrooms;
   "functions/dashboard": typeof functions_dashboard;
   "functions/excerpts": typeof functions_excerpts;
   "functions/files": typeof functions_files;
+  "functions/gamification": typeof functions_gamification;
   "functions/ml": typeof functions_ml;
   "functions/performance": typeof functions_performance;
   "functions/phonemes": typeof functions_phonemes;

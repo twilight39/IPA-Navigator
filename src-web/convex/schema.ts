@@ -289,6 +289,54 @@ const mlSchema = {
     .index("by_user_phoneme", ["userId", "phoneme"]),
 };
 
+const gamificationSchema = {
+  daily_chapter_selection: defineTable({
+    selectedDate: v.string(), // YYYY-MM-DD in GMT+8
+    chapterId: v.id("chapter"),
+    selectedAt: v.number(),
+  }).index("by_date", ["selectedDate"]),
+
+  user_streak: defineTable({
+    userId: v.id("users"),
+    currentStreak: v.number(),
+    longestStreak: v.number(),
+    lastPracticeDate: v.optional(v.string()), // YYYY-MM-DD in GMT+8
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  daily_practice_log: defineTable({
+    userId: v.id("users"),
+    practicedOn: v.string(), // YYYY-MM-DD in GMT+8
+    claimedAt: v.number(),
+  }).index("by_user_date", ["userId", "practicedOn"]),
+
+  notifications: defineTable({
+    userId: v.id("users"),
+    type: v.union(
+      v.literal("badge_earned"),
+      v.literal("streak_milestone"),
+      v.literal("daily_claimed"),
+      v.literal("streak_lost"),
+    ),
+    title: v.string(),
+    message: v.string(),
+    metadata: v.optional(v.object({
+      badgeName: v.optional(v.string()),
+      streakDays: v.optional(v.number()),
+      coinsEarned: v.optional(v.number()),
+    })),
+    read: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId", "createdAt"]),
+
+  user_badges: defineTable({
+    userId: v.id("users"),
+    badgeId: v.string(),
+    earnedAt: v.number(),
+  }).index("by_user", ["userId"]),
+};
+
 export default defineSchema({
   ...userSchema,
   ...chapterSchema,
@@ -298,4 +346,5 @@ export default defineSchema({
   ...socialSchema,
   ...classroomSchema,
   ...mlSchema,
+  ...gamificationSchema,
 });

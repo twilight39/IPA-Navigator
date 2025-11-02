@@ -163,6 +163,17 @@ export const savePracticeResults = mutation({
       },
       created_at: Date.now(),
     });
+
+    /* 6. Claim daily reward */
+    try {
+      await ctx.runMutation(
+        api.functions.gamification.claimDailyReward,
+        {},
+      );
+    } catch (error) {
+      // Silently fail if already claimed today or other error
+      console.log("Daily reward already claimed or error:", error);
+    }
   },
 });
 
