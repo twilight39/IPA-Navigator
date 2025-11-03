@@ -19,7 +19,7 @@ BATCH_SIZE = 8
 
 # Load model
 transcribe_model = whisperx.load_model(
-    MODEL, DEVICE, compute_type=COMPUTE_TYPE, download_root=LOCAL_MODEL
+    MODEL, DEVICE, compute_type=COMPUTE_TYPE, download_root=LOCAL_MODEL, language="en"
 )
 align_model, metadata = whisperx.load_align_model(
     language_code="en", device=DEVICE, model_dir=LOCAL_MODEL
@@ -51,19 +51,30 @@ def fuzzy_word_alignment(
 
     matcher = difflib.SequenceMatcher(None, expected_normalized, transcribed_normalized)
 
-    word_alignments: list[WordAlignment] = []
+    word_alignments: list[WordAlignment] = [
+        {
+            "expected_word": word,
+            "expected_index": i,
+            "transcribed_word": None,
+            "confidence": 0.0,
+            "start_time": None,
+            "end_time": None,
+        }
+        for i, word in enumerate(expected_words)
+    ]
+
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag == "equal":
             # Perfect matches
             for k in range(i2 - i1):
-                word_alignments.append(
+                exp_idx = i1 + k
+                trans_idx = j1 + k
+                word_alignments[exp_idx].update(
                     {
-                        "expected_word": expected_words[i1 + k],
-                        "expected_index": i1 + k,
-                        "transcribed_word": whisperx_segments[j1 + k]["word"],
+                        "transcribed_word": expected_words[exp_idx],
                         "confidence": 1.0,
-                        "start_time": whisperx_segments[j1 + k]["start"],
-                        "end_time": whisperx_segments[j1 + k]["end"],
+                        "start_time": whisperx_segments[trans_idx]["start"],
+                        "end_time": whisperx_segments[trans_idx]["end"],
                     }
                 )
 
@@ -72,46 +83,31 @@ def fuzzy_word_alignment(
             expected_chunk = expected_words[i1:i2]
             transcribed_chunk = whisperx_segments[j1:j2]
 
-            # For small chunks, do individual word matching
-            if len(expected_chunk) <= 3 and len(transcribed_chunk) <= 3:
-                for exp_idx, exp_word in enumerate(expected_chunk):
-                    best_match: SingleWordSegment | None = None
-                    best_score = 0
+            for i, exp_word in enumerate(expected_chunk):
+                best_match: SingleWordSegment | None = None
+                best_score = 0.0
 
-                    for trans_idx, trans_word in enumerate(transcribed_chunk):
-                        score = ratio(
-                            normalize_word(exp_word), normalize_word(trans_word["word"])
-                        )
-                        score = cast(float, score)
-                        if score > best_score:
-                            best_score = score
-                            best_match = trans_word
+                for trans_word_segment in transcribed_chunk:
+                    score = ratio(
+                        normalize_word(exp_word),
+                        normalize_word(trans_word_segment["word"]),
+                    )
+                    score = cast(float, score)
+                    if score > best_score:
+                        best_score = score
+                        best_match = trans_word_segment
 
-                    if best_score > 0.6:  # threshold for fuzzy match
-                        word_alignments.append(
-                            {
-                                "expected_word": exp_word,
-                                "expected_index": i1 + exp_idx,
-                                "transcribed_word": best_match["word"],
-                                "confidence": best_score,
-                                "start_time": best_match["start"],
-                                "end_time": best_match["end"],
-                            }
-                        )
-
-        elif tag == "delete":
-            # Expected words not found in transcription
-            for k in range(i2 - i1):
-                word_alignments.append(
-                    {
-                        "expected_word": expected_words[i1 + k],
-                        "expected_index": i1 + k,
-                        "transcribed_word": None,
-                        "confidence": 0.0,
-                        "start_time": None,
-                        "end_time": None,
-                    }
-                )
+                        # If a reasonably good match is found, update the placeholder.
+                if best_match and best_score > 0.5:  # Lowered threshold slightly
+                    exp_idx = i1 + i
+                    word_alignments[exp_idx].update(
+                        {
+                            "transcribed_word": exp_word,
+                            "confidence": best_score,
+                            "start_time": best_match["start"],
+                            "end_time": best_match["end"],
+                        }
+                    )
 
     return word_alignments
 

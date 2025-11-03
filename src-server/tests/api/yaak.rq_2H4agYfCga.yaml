@@ -1,0 +1,27 @@
+type: http_request
+model: http_request
+id: rq_2H4agYfCga
+createdAt: 2025-10-27T14:47:45.785563
+updatedAt: 2025-10-27T14:48:11.692122
+workspaceId: wk_xaXUPwwVmi
+folderId: null
+authentication: {}
+authenticationType: null
+body:
+  text: |-
+    {
+      "accent": "uk",
+      "text": "Test."
+    }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: wbPzYum44V
+method: POST
+name: ''
+sortPriority: -1747927551858.998
+url: 0.0.0.0:8000/analyze-phonemes
+urlParameters: []

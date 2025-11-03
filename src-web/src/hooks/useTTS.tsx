@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api.js";
 
 type TTSVoice =
   | "american_female_bella"
@@ -41,9 +43,15 @@ export function useTTS(options: UseTTSOptions = {}) {
     }
   };
 
+  const userVoice = useQuery(api.functions.users.getPreferredTTSVoice) ||
+    defaultVoice;
+  const setUserVoice = useMutation(
+    api.functions.users.setPreferredTTSVoice,
+  );
+
   const playText = async (
     text: string,
-    voice: TTSVoice = defaultVoice,
+    voice: TTSVoice = userVoice,
     speed: number = defaultSpeed,
   ) => {
     // Stop any currently playing audio
@@ -122,5 +130,7 @@ export function useTTS(options: UseTTSOptions = {}) {
     isPlaying,
     error,
     isLoading,
+    setUserVoice,
+    userVoice,
   };
 }

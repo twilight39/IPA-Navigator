@@ -25,7 +25,6 @@ export const ChapterCreateModal: React.FC<ChapterCreateModalProps> = ({}) => {
     const chapterName = formData.get("chapterName") as string;
     const description = formData.get("description") as string;
     const file = uploadedFile;
-    const difficulty = "Beginner";
 
     let imageIds: string[] = [];
     console.log("Attempting to upload image");
@@ -40,16 +39,15 @@ export const ChapterCreateModal: React.FC<ChapterCreateModalProps> = ({}) => {
       );
     }
 
-    console.log(imageIds);
+    // console.log(imageIds);
     const imageId = imageIds[0] || undefined;
-    console.log(imageId);
+    // console.log(imageId);
 
     try {
       await createChapter(
         {
           name: chapterName,
           description: description,
-          difficulty: difficulty,
           imageId: imageId,
         },
       );

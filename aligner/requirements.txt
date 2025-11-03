@@ -7,6 +7,10 @@ torchaudio
 transformers
 phonemizer
 
+# Phoneme Accuracy
+panphon
+scipy
+
 # Concurrent processing
 fastapi[standard]
 

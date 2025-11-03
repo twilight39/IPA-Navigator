@@ -39,5 +39,11 @@
   "formatter": "auto",
   "remove_trailing_whitespace_on_save": true,
   "ensure_final_newline_on_save": true,
-  "file_scan_exclusions": ["**/node_modules", "**/.git", "**/.DS_Store"]
+  "file_scan_exclusions": [
+    "**/node_modules",
+    "**/.git",
+    "**/.DS_Store",
+    ".ruff_cache",
+    "__pycache__"
+  ]
 }
