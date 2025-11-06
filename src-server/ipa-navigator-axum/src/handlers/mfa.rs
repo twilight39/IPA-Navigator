@@ -1,6 +1,6 @@
 use axum::extract::Json;
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
-use ipa_navigator_mfa::{api::assess_pronunciation, docker::MfaDialect};
+// use ipa_navigator_mfa::{api::assess_pronunciation, docker::MfaDialect};
 
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
@@ -45,6 +45,7 @@ pub struct PhonemeAssessmentDetail {
     pub end_time: f64,
 }
 
+/*
 /// Handle pronunciation assessment requests
 pub async fn assess(
     Json(request): Json<PronunciationRequest>,
@@ -103,3 +104,4 @@ pub async fn assess(
 
     Ok(Json(response))
 }
+ */

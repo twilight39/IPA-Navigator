@@ -1,0 +1,36 @@
+type: http_request
+model: http_request
+id: rq_m839WPmoa5
+createdAt: 2025-11-05T08:32:17.524521
+updatedAt: 2025-11-05T09:04:49.137947
+workspaceId: wk_xaXUPwwVmi
+folderId: null
+authentication: {}
+authenticationType: null
+body:
+  text: |2-
+     {
+       "text": "This is a test sentence.",
+       "voice": "american_female_bella",
+       "speed": 1
+     }
+bodyType: application/json
+description: ''
+headers:
+- enabled: true
+  name: ''
+  value: ''
+  id: nXujnjDwwf
+- enabled: true
+  name: Content-Type
+  value: application/json
+  id: rtcAnvMPUm
+method: POST
+name: TTS
+sortPriority: -1747927551858.999
+url: https://ipa-server-b9627035135f.herokuapp.com/api/tts
+urlParameters:
+- enabled: true
+  name: ''
+  value: ''
+  id: Rxjc6D4NXw

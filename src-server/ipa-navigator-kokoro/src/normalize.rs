@@ -36,7 +36,7 @@ pub fn normalize_text(text: &str) -> String {
         text = re.replace_all(&text, *replacement).to_string();
     }
 
-    // Basic number formatting (optional, remove if your TTS handles these well)
+    // Basic number formatting
     // Replace ranges with "to"
     let range_re = Regex::new(r"(\d+)-(\d+)").unwrap();
     text = range_re.replace_all(&text, "$1 to $2").to_string();

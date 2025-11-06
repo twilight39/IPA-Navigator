@@ -269,12 +269,12 @@ const classroomSchema = {
 
 const mlSchema = {
   recommendation_model: defineTable({
-    version: v.number(), // Increment on major resets
+    version: v.number(),
     coefficients: v.array(v.number()), // Weights for each feature
     feature_names: v.array(v.string()), // ["vowel_count", "consonant_count", ...]
     learning_rate: v.number(), // Adaptive learning rate (0.01)
     updated_at: v.number(),
-    total_updates: v.number(), // Track how many times model was updated
+    total_updates: v.number(),
   }),
 
   user_phoneme_accuracy_stats: defineTable({

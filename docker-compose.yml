@@ -1,18 +1,4 @@
 services:
-  web:
-    build:
-      context: ./src-web
-      dockerfile: Dockerfile
-    container_name: ipa-web
-    ports:
-      - "4173:4173"
-    environment:
-      - ENV DENO_DIR=/deno-dir/
-      - ENV DENO_ENV=production
-      - ENV DENO_INSTALL_ROOT=/usr/local
-      - ENV PATH=${DENO_INSTALL_ROOT}/bin:${PATH}
-    restart: unless-stopped
-
   server:
     build:
       context: ./src-server
@@ -24,4 +10,16 @@ services:
       - HOST=0.0.0.0
       - PORT=3002
       - RUST_LOG=info
+    restart: unless-stopped
+
+  aligner:
+    build:
+      context: ./aligner
+      dockerfile: Dockerfile
+    container_name: ipa-aligner
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
     restart: unless-stopped

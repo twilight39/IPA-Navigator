@@ -3,7 +3,10 @@ RUN cargo install cargo-chef
 WORKDIR /app
 
 FROM chef AS planner
-COPY . .
+COPY Cargo.toml Cargo.lock ./
+COPY src ./src
+COPY ipa-navigator-axum ./ipa-navigator-axum
+COPY ipa-navigator-kokoro ./ipa-navigator-kokoro
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
@@ -44,13 +47,15 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/src-server /usr/local/bin
+COPY --from=builder /app/assets ./assets
 
 # Set environment variables
 ENV HOST=0.0.0.0
 ENV PORT=3002
 ENV RUST_LOG=info
-ENV CONVEX_DEPLOYMENT_URL=https://tremendous-bear-886.convex.cloud
+ENV CONVEX_DEPLOYMENT_URL=https://beaming-crane-112.convex.site
+ENV ESPEAK_DATA_PATH=/usr/lib/aarch64-linux-gnu/espeak-ng-data
 EXPOSE 3002
 
 # Set the default command to run the application
-ENTRYPOINT ["/usr/local/bin/src-server"]
+CMD ["/usr/local/bin/src-server"]
