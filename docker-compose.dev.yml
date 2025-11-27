@@ -10,6 +10,8 @@ services:
       - DENO_DIR=/deno-dir/
       - DENO_ENV=production
       - DENO_INSTALL_ROOT=/usr/local
+      - VITE_TTS_API_URL=http://localhost:3002/api/tts
+      - VITE_ANALYSIS_API_URL=http://localhost:8000/align
     volumes:
       - ./src-web:/app
       - /app/node_modules
@@ -18,7 +20,7 @@ services:
   server:
     build:
       context: ./src-server
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: ipa-server
     ports:
       - "3002:3002"
@@ -31,18 +33,14 @@ services:
       - ./src-server:/app
     restart: unless-stopped
 
-  mfa:
-    platform: linux/amd64
+  aligner:
     build:
-      context: ./src-server/ipa-navigator-mfa
+      context: ./aligner
       dockerfile: Dockerfile
-    container_name: ipa-mfa
+    container_name: ipa-aligner
     ports:
-      - "4000:4000"
+      - "8000:8000"
     environment:
       - HOST=0.0.0.0
-      - PORT=4000
-      - RUST_LOG=debug
-    volumes:
-      - ./src-server/ipa-navigator-mfa/data:/data
+      - PORT=8000
     restart: unless-stopped

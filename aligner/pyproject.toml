@@ -8,6 +8,7 @@ dependencies = [
     "panphon>=0.22.2",
     "phonemizer>=3.3.0",
     "pydantic>=2.12.0",
+    "pytest>=8.4.2",
     "scipy>=1.16.2",
     "torch>=2.8.0",
     "torchaudio>=2.8.0",
@@ -29,6 +30,26 @@ typeCheckingMode = "recommended"
 allowedUntypedLibraries = ["soundfile"]
 venvPath = "aligner"
 venv=".venv"
+
+[tool.pytest.ini_options]
+# Suppress annoying deprecation warnings from panphon/SWIG
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore:torchaudio._backend.list_audio_backends:UserWarning",
+    "ignore::PendingDeprecationWarning",
+]
+# Better test output formatting
+addopts = [
+    "-v",                          # Verbose
+    "--tb=short",                  # Shorter tracebacks
+    "-ra",                         # Show summary of all test outcomes
+    "--strict-markers",            # Warn about unknown markers
+]
+
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 
 [dependency-groups]
 dev = [
