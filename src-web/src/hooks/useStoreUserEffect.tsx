@@ -1,13 +1,13 @@
 import { useUser } from "@clerk/clerk-react";
-import { useConvexAuth } from "convex/react";
+// import { useConvexAuth } from "convex/react";
 import { useEffect, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api.js";
-import { Id } from "../../convex/_generated/dataModel.d.ts";
+import type { Id } from "../../convex/_generated/dataModel.d.ts";
 
 export function useStoreUserEffect() {
-  const { isLoading, isAuthenticated } = useConvexAuth();
-  const { user } = useUser();
+  // const { isLoading, isAuthenticated } = useConvexAuth();
+  const { isLoaded, user } = useUser();
 
   // When this state is set we know the server has stored the user.
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -17,7 +17,7 @@ export function useStoreUserEffect() {
   // the current user in the `users` table and return the `Id` value.
   useEffect(() => {
     // If the user is not logged in don't do anything
-    if (!isAuthenticated) {
+    if (!isLoaded || !user) {
       return;
     }
 
@@ -31,12 +31,12 @@ export function useStoreUserEffect() {
     return () => setUserId(null);
     // Make sure the effect reruns if the user logs in with
     // a different identity
-  }, [isAuthenticated, storeUser, user?.id]);
+  }, [isLoaded, storeUser, user?.id]);
 
   // Combine the local state with the state from context
   return {
-    isLoading: isLoading || (isAuthenticated && userId === null),
-    isAuthenticated: isAuthenticated && userId !== null,
+    isLoading: !isLoaded || (userId === null),
+    isAuthenticated: userId !== null,
     userId: userId,
   };
 }
