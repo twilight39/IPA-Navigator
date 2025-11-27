@@ -81,7 +81,7 @@ function DashboardComponent() {
 
   if (
     user === null || user === undefined || userCommunityStats === undefined ||
-    userMeterData === undefined || userSkills === undefined
+    userMeterData === undefined || userSkills === undefined || userActivityLog === undefined
   ) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -91,6 +91,13 @@ function DashboardComponent() {
   }
 
   // --- SVG Constants ---
+  // Helper to safely get stats
+  const getStats = (level: string) =>
+    (userMeterData.categories.difficulty as any)[level] || {
+      solved: 0,
+      total: 0,
+    };
+
   const overallTotal = Object.values(userMeterData.categories.difficulty).map((
     d,
   ) => d.total).reduce((a, b) => a + b, 0);
@@ -239,27 +246,27 @@ function DashboardComponent() {
               </div>
               {userSkills["Vowels"] &&
                 Object.keys(userSkills["Vowels"]).length === 0 && (
-                <p className="text-xs text-gray-400 italic">(No Skills)</p>
-              )}
+                  <p className="text-xs text-gray-400 italic">(No Skills)</p>
+                )}
               {userSkills["Vowels"] &&
                 Object.keys(userSkills["Vowels"]).length > 0 && (
-                <div className="flex flex-wrap space-x-1">
-                  {Object.values(userSkills["Vowels"])
-                    .filter((skill) => skill.completedCount > 0)
-                    .map((skill) => (
-                      <div className="flex flex-row">
-                        <div
-                          className={`badge badge-sm badge-ghost`}
-                        >
-                          {skill.name}
+                  <div className="flex flex-wrap space-x-1">
+                    {Object.values(userSkills["Vowels"])
+                      .filter((skill) => skill.completedCount > 0)
+                      .map((skill) => (
+                        <div className="flex flex-row">
+                          <div
+                            className={`badge badge-sm badge-ghost`}
+                          >
+                            {skill.name}
+                          </div>
+                          <div className="tex-sm text-gray-400">
+                            x {skill.completedCount}
+                          </div>
                         </div>
-                        <div className="tex-sm text-gray-400">
-                          x {skill.completedCount}
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
+                      ))}
+                  </div>
+                )}
               <div className="flex flex-row space-x-2 items-center mt-2">
                 <div
                   aria-label="status"
@@ -272,27 +279,27 @@ function DashboardComponent() {
               </div>
               {userSkills["Consonants"] &&
                 Object.keys(userSkills["Consonants"]).length === 0 && (
-                <p className="text-xs text-gray-400 italic">(No Skills)</p>
-              )}
+                  <p className="text-xs text-gray-400 italic">(No Skills)</p>
+                )}
               {userSkills["Consonants"] &&
                 Object.keys(userSkills["Consonants"]).length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {Object.values(userSkills["Consonants"])
-                    .filter((skill) => skill.completedCount > 0)
-                    .map((skill) => (
-                      <div className="flex flex-row">
-                        <div
-                          className={`badge badge-sm badge-ghost`}
-                        >
-                          {skill.name}
+                  <div className="flex flex-wrap gap-1">
+                    {Object.values(userSkills["Consonants"])
+                      .filter((skill) => skill.completedCount > 0)
+                      .map((skill) => (
+                        <div className="flex flex-row">
+                          <div
+                            className={`badge badge-sm badge-ghost`}
+                          >
+                            {skill.name}
+                          </div>
+                          <div className="tex-sm text-gray-400">
+                            x {skill.completedCount}
+                          </div>
                         </div>
-                        <div className="tex-sm text-gray-400">
-                          x {skill.completedCount}
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
+                      ))}
+                  </div>
+                )}
               <div className="flex flex-row space-x-2 items-center mt-2">
                 <div
                   aria-label="status"
@@ -305,27 +312,27 @@ function DashboardComponent() {
               </div>
               {userSkills["Dipthongs"] &&
                 Object.keys(userSkills["Dipthongs"]).length === 0 && (
-                <p className="text-xs text-gray-400 italic">(No Skills)</p>
-              )}
+                  <p className="text-xs text-gray-400 italic">(No Skills)</p>
+                )}
               {userSkills["Dipthongs"] &&
                 Object.keys(userSkills["Dipthongs"]).length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {Object.values(userSkills["Dipthongs"])
-                    .filter((skill) => skill.completedCount > 0)
-                    .map((skill) => (
-                      <div className="flex flex-row">
-                        <div
-                          className={`badge badge-sm badge-ghost`}
-                        >
-                          {skill.name}
+                  <div className="flex flex-wrap gap-1">
+                    {Object.values(userSkills["Dipthongs"])
+                      .filter((skill) => skill.completedCount > 0)
+                      .map((skill) => (
+                        <div className="flex flex-row">
+                          <div
+                            className={`badge badge-sm badge-ghost`}
+                          >
+                            {skill.name}
+                          </div>
+                          <div className="tex-sm text-gray-400">
+                            x {skill.completedCount}
+                          </div>
                         </div>
-                        <div className="tex-sm text-gray-400">
-                          x {skill.completedCount}
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
+                      ))}
+                  </div>
+                )}
             </div>
           </div>
         </div>
@@ -392,9 +399,8 @@ function DashboardComponent() {
                   {userPercentileData?.histogram.map((bucket) => (
                     <div
                       key={bucket.range}
-                      className={`flex-1 rounded-sm transition-all ${
-                        bucket.isUserBucket ? "bg-warning" : "bg-gray-300"
-                      }`}
+                      className={`flex-1 rounded-sm transition-all ${bucket.isUserBucket ? "bg-warning" : "bg-gray-300"
+                        }`}
                       style={{
                         height: `${Math.max(bucket.heightPercent, 5)}%`,
                       }}
@@ -431,20 +437,20 @@ function DashboardComponent() {
                         const segmentLength = (segmentDegrees / 360) *
                           circumference;
 
+
+
+                        const beginnerStats = getStats("Beginner");
+                        const intermediateStats = getStats("Intermediate");
+                        const advancedStats = getStats("Advanced");
+
                         // Calculate progress percentages
                         const beginnerProgress =
-                          userMeterData.categories.difficulty.Beginner.solved /
-                            userMeterData.categories.difficulty.Beginner
-                              .total || 0;
+                          beginnerStats.solved / beginnerStats.total || 0;
                         const intermediateProgress =
-                          userMeterData.categories.difficulty.Intermediate
-                              .solved /
-                            userMeterData.categories.difficulty.Intermediate
-                              .total || 0;
+                          intermediateStats.solved / intermediateStats.total ||
+                          0;
                         const advancedProgress =
-                          userMeterData.categories.difficulty.Advanced.solved /
-                            userMeterData.categories.difficulty.Advanced
-                              .total || 0;
+                          advancedStats.solved / advancedStats.total || 0;
 
                         return (
                           <>
@@ -457,9 +463,8 @@ function DashboardComponent() {
                               fill="none"
                               stroke="#B8FFD2"
                               strokeWidth={strokeWidth}
-                              strokeDasharray={`${segmentLength} ${
-                                circumference - segmentLength
-                              }`}
+                              strokeDasharray={`${segmentLength} ${circumference - segmentLength
+                                }`}
                               strokeDashoffset={circumference * 135 / 360}
                               strokeLinecap="round"
                             />
@@ -472,9 +477,8 @@ function DashboardComponent() {
                               fill="none"
                               stroke="#FEF3C7"
                               strokeWidth={strokeWidth}
-                              strokeDasharray={`${segmentLength} ${
-                                circumference - segmentLength
-                              }`}
+                              strokeDasharray={`${segmentLength} ${circumference - segmentLength
+                                }`}
                               strokeDashoffset={circumference * 42.5 / 360}
                               strokeLinecap="round"
                             />
@@ -487,9 +491,8 @@ function DashboardComponent() {
                               fill="none"
                               stroke="#FFA9B0"
                               strokeWidth={strokeWidth}
-                              strokeDasharray={`${segmentLength} ${
-                                circumference - segmentLength
-                              }`}
+                              strokeDasharray={`${segmentLength} ${circumference - segmentLength
+                                }`}
                               strokeDashoffset={-circumference * 50 / 360}
                               strokeLinecap="round"
                             />
@@ -503,11 +506,9 @@ function DashboardComponent() {
                               fill="none"
                               stroke="#05D3BD"
                               strokeWidth={strokeWidth}
-                              strokeDasharray={`${
-                                segmentLength * beginnerProgress
-                              } ${
-                                circumference - segmentLength * beginnerProgress
-                              }`}
+                              strokeDasharray={`${segmentLength * beginnerProgress
+                                } ${circumference - segmentLength * beginnerProgress
+                                }`}
                               strokeDashoffset={circumference * 135 / 360}
                               strokeLinecap="round"
                             />
@@ -520,12 +521,10 @@ function DashboardComponent() {
                               fill="none"
                               stroke="#FEC84B"
                               strokeWidth={strokeWidth}
-                              strokeDasharray={`${
-                                segmentLength * intermediateProgress
-                              } ${
-                                circumference - segmentLength *
-                                  intermediateProgress
-                              }`}
+                              strokeDasharray={`${segmentLength * intermediateProgress
+                                } ${circumference - segmentLength *
+                                intermediateProgress
+                                }`}
                               strokeDashoffset={circumference * 42.5 / 360}
                               strokeLinecap="round"
                             />
@@ -538,11 +537,9 @@ function DashboardComponent() {
                               fill="none"
                               stroke="#FE637D"
                               strokeWidth={strokeWidth}
-                              strokeDasharray={`${
-                                segmentLength * advancedProgress
-                              } ${
-                                circumference - segmentLength * advancedProgress
-                              }`}
+                              strokeDasharray={`${segmentLength * advancedProgress
+                                } ${circumference - segmentLength * advancedProgress
+                                }`}
                               strokeDashoffset={-circumference * 50 / 360}
                               strokeLinecap="round"
                             />
@@ -577,8 +574,7 @@ function DashboardComponent() {
                         Beginner
                       </p>
                       <p className="">
-                        {userMeterData.categories.difficulty.Beginner
-                          .solved}/{userMeterData.categories.difficulty.Beginner
+                        {getStats("Beginner").solved}/{getStats("Beginner")
                           .total}
                       </p>
                     </div>
@@ -589,9 +585,8 @@ function DashboardComponent() {
                         Intermediate
                       </p>
                       <p className="">
-                        {userMeterData.categories.difficulty.Intermediate
-                          .solved}/
-                        {userMeterData.categories.difficulty.Intermediate.total}
+                        {getStats("Intermediate").solved}/
+                        {getStats("Intermediate").total}
                       </p>
                     </div>
                   </div>
@@ -601,8 +596,8 @@ function DashboardComponent() {
                         Advanced
                       </p>
                       <p className="">
-                        {userMeterData.categories.difficulty.Advanced.solved}/
-                        {userMeterData.categories.difficulty.Advanced.total}
+                        {getStats("Advanced").solved}/
+                        {getStats("Advanced").total}
                       </p>
                     </div>
                   </div>
@@ -734,13 +729,11 @@ function getTimeElapsed(date: Date | null): string {
   }
 
   if (years > 0) {
-    return `${years} year${years > 1 ? "s" : ""}, ${months} month${
-      months !== 1 ? "s" : ""
-    }`;
+    return `${years} year${years > 1 ? "s" : ""}, ${months} month${months !== 1 ? "s" : ""
+      }`;
   } else if (months > 0) {
-    return `${months} month${months !== 1 ? "s" : ""}, ${days} day${
-      days !== 1 ? "s" : ""
-    }`;
+    return `${months} month${months !== 1 ? "s" : ""}, ${days} day${days !== 1 ? "s" : ""
+      }`;
   } else {
     return `${days} day${days !== 1 ? "s" : ""}`;
   }
