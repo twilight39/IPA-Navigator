@@ -45,7 +45,7 @@ export const getRandomChapterForDaily = query({
       return chapter;
     }
 
-    throw new Error("No chapter selected for today");
+    return null;
   },
 });
 
