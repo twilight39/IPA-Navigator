@@ -55,7 +55,7 @@ export function usePronunciationAnalysis(
   options: UsePronunciationAnalysisOptions = {},
 ) {
   const {
-    serverUrl = "http://127.0.0.1:8000/align",
+    serverUrl = import.meta.env.VITE_ANALYSIS_API_URL || "http://127.0.0.1:8000/align",
   } = options;
 
   const { userVoice } = useTTS();

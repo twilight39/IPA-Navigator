@@ -17,7 +17,8 @@ tower-http = { version = "0.6.4", features = [
 ipa-navigator-kokoro = { path = "../ipa-navigator-kokoro" }
 
 # MFA
-ipa-navigator-mfa = { path = "../ipa-navigator-mfa" }
+# Deprecated, moved to /aligner
+# ipa-navigator-mfa = { path = "../ipa-navigator-mfa" }
 
 # Async runtime
 tokio = { version = "1.45.0", features = ["full"] }

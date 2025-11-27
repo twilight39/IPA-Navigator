@@ -25,7 +25,7 @@ interface UseTTSOptions {
 
 export function useTTS(options: UseTTSOptions = {}) {
   const {
-    serverUrl = "http://0.0.0.0:3002/api/tts",
+    serverUrl = import.meta.env.VITE_TTS_API_URL || "http://127.0.0.1:3002/api/tts",
     defaultVoice = "american_female_bella",
     defaultSpeed = 1,
   } = options;

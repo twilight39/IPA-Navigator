@@ -1,6 +1,6 @@
 from phonemizer import phonemize
 from typing import TypedDict, cast, Literal
-import panphon._panphon as panphon
+import panphon, panphon.distance
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from functools import lru_cache
@@ -11,6 +11,7 @@ from .wav2vec import Phoneme, is_valid_phoneme
 # Initialize panphon feature table globally
 try:
     ft = panphon.FeatureTable()
+    dst = panphon.distance.Distance()
     PANPHON_AVAILABLE = True
     print("Panphon loaded successfully for phoneme similarity calculations")
 except ImportError:
@@ -63,40 +64,11 @@ def calculate_phoneme_similarity(phoneme1: str, phoneme2: str) -> float:
             f"Calculating similarity between '{phoneme1}' and '{phoneme2}' using panphon..."
         )
 
-        # Get feature vectors from panphon
-        features1 = ft.word_fts(phoneme1)[0] if ft.word_fts(phoneme1) else None
-        features2 = ft.word_fts(phoneme2)[0] if ft.word_fts(phoneme2) else None
+        # Get Segment objects
+        distance = dst.weighted_feature_edit_distance(phoneme1, phoneme2)
+        weights = sum(ft.weights)
 
-        if features1 is None or features2 is None:
-            # Fallback to comprehensive rule-based system
-            return calculate_phoneme_similarity_rule_based(phoneme1, phoneme2)
-
-        # Convert feature dict to binary vector
-        def panphon_feature_to_float(val):
-            if isinstance(val, (int, float)):
-                return float(val)
-            if val == "+":
-                return 1.0
-            if val == "-":
-                return -1.0
-            if val == "0":
-                return 0.0
-            return 0.0  # fallback for other strings
-
-        vec1 = np.array(
-            list([panphon_feature_to_float(feature) for feature in features1]),
-            dtype=np.float32,
-        ).reshape(1, -1)
-        vec2 = np.array(
-            list([panphon_feature_to_float(feature) for feature in features2]),
-            dtype=np.float32,
-        ).reshape(1, -1)
-
-        cos_sim = cosine_similarity(vec1, vec2)[0][0]
-        similarity = (cos_sim + 1) / 2.0
-
-        return min(0.95, similarity)
-
+        return min(0.95, max(0.0, 1 - distance / weights))
     except Exception as e:
         print(f"Error calculating phoneme similarity with panphon: {e}")
         return calculate_phoneme_similarity_rule_based(phoneme1, phoneme2)

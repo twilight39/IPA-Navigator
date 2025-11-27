@@ -1,8 +1,10 @@
 import os
 
-os.environ["PHONEMIZER_ESPEAK_LIBRARY"] = (
+espeak_path = os.environ.get(
+    "PHONEMIZER_ESPEAK_LIBRARY",
     "/opt/homebrew/Cellar/espeak-ng/1.52.0/lib/libespeak-ng.dylib"
 )
+os.environ["PHONEMIZER_ESPEAK_LIBRARY"] = espeak_path
 print("Set Espeak Dylib Path.")
 
 from fastapi import FastAPI, HTTPException
